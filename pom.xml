@@ -190,7 +190,7 @@
   <properties>
     <java.version>11</java.version>
     <sonar.language>java</sonar.language>
-    <spring.boot.version>2.6.6</spring.boot.version>
+    <spring.boot.version>2.6.15</spring.boot.version>
   </properties>
   <version>0.0.1</version>
 </project>
