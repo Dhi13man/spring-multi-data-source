@@ -21,15 +21,16 @@ repositories during the build process itself, which can then be used by the serv
 ## Table of Contents
 
 - [spring-multi-data-source](#spring-multi-data-source)
-    - [Table of Contents](#table-of-contents)
-    - [Introduction](#introduction)
-    - [Annotations Provided](#annotations-provided)
-        - [@EnableMultiDataSourceConfig](#enablemultidatasourceconfig)
-        - [@MultiDataSourceRepository](#multidatasourcerepository)
-    - [Usage](#usage)
-    - [Building From Source](#building-from-source)
-    - [Contributing](#contributing)
-    - [Resources](#resources)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Annotations Provided](#annotations-provided)
+    - [@EnableMultiDataSourceConfig](#enablemultidatasourceconfig)
+    - [@MultiDataSourceRepository](#multidatasourcerepository)
+  - [Usage](#usage)
+  - [Building from Source (Maven)](#building-from-source-maven)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Resources](#resources)
 
 ## Introduction
 
@@ -57,25 +58,25 @@ for configuring multi-data source configurations for a service. Let's break down
 - It can be applied to a class (target: `ElementType.TYPE`).
 
 - It has the following attributes:
-    - `exactEntityPackages`: An array of exact packages to scan for entities. These packages are
+  - `exactEntityPackages`: An array of exact packages to scan for entities. These packages are
       scanned to find the entities related to the data sources.
-    - `repositoryPackages`: An array of packages to scan for repositories. These packages are
+  - `repositoryPackages`: An array of packages to scan for repositories. These packages are
       scanned to find the repositories related to the data sources.
-    - `masterDataSourceName`: The name of the master data source. It is used to generate the
+  - `masterDataSourceName`: The name of the master data source. It is used to generate the
       master beans and name the generated classes, packages, and property paths for the data
       source properties.
-    - `dataSourceClassString`: The class name of the master data source. It defines the data
+  - `dataSourceClassString`: The class name of the master data source. It defines the data
       source bean type.
-    - `datasourcePropertiesPrefix`: The prefix of the master data source properties in the
+  - `datasourcePropertiesPrefix`: The prefix of the master data source properties in the
       application properties file.
-    - `hikariPropertiesPrefix`: The prefix of the Hikari data source properties in the
+  - `hikariPropertiesPrefix`: The prefix of the Hikari data source properties in the
       application properties file.
-    - `hibernateBeanContainerPropertyPath`: The path of the Hibernate bean container property in
+  - `hibernateBeanContainerPropertyPath`: The path of the Hibernate bean container property in
       the application properties.
-    - `generatedConfigPackage`: The package where the generated master data source config will
+  - `generatedConfigPackage`: The package where the generated master data source config will
       be placed. The generated config class with relevant beans will follow a specific naming
       format.
-    - `generatedRepositoryPackagePrefix`: The prefix of the package where the generated copies
+  - `generatedRepositoryPackagePrefix`: The prefix of the package where the generated copies
       of the repositories will be placed. The generated repositories will follow a specific
       naming format.
 
@@ -87,7 +88,7 @@ for configuring multi-data source configurations for a service. Let's break down
 - It can be applied to a method (target: `ElementType.METHOD`).
 
 - It has the following attributes:
-    - `dataSourceName` (or `value`): The name of the data source to use for the repository.
+  - `dataSourceName` (or `value`): The name of the data source to use for the repository.
 
 Both annotations are available at the source level and are not retained at runtime. They are
 intended to be used for generating code for configuring data sources during the build process.
