@@ -1,4 +1,4 @@
-package com.dhi13man.spring.datasource.utils;
+package io.github.dhi13man.spring.datasource.utils;
 
 import com.squareup.javapoet.FieldSpec;
 import javax.lang.model.element.Modifier;

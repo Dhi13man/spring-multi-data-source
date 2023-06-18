@@ -87,7 +87,7 @@
     applications easier.
   </description>
 
-  <groupId>com.dhi13man.spring</groupId>
+  <groupId>io.github.dhi13man</groupId>
   <modelVersion>4.0.0</modelVersion>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>jar</packaging>

@@ -1,14 +1,14 @@
-package com.dhi13man.spring.datasource.processor;
+package io.github.dhi13man.spring.datasource.processor;
 
-import static com.dhi13man.spring.datasource.utils.CommonStringUtils.toKebabCase;
-import static com.dhi13man.spring.datasource.utils.CommonStringUtils.toPascalCase;
-import static com.dhi13man.spring.datasource.utils.CommonStringUtils.toSnakeCase;
+import static io.github.dhi13man.spring.datasource.utils.CommonStringUtils.toKebabCase;
+import static io.github.dhi13man.spring.datasource.utils.CommonStringUtils.toPascalCase;
+import static io.github.dhi13man.spring.datasource.utils.CommonStringUtils.toSnakeCase;
 
-import com.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
-import com.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
-import com.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
-import com.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
-import com.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
+import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
+import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
+import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
+import io.github.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
@@ -38,7 +38,7 @@ import org.springframework.util.StringUtils;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
- * {@link com.dhi13man.spring.datasource.annotations.MultiDataSourceRepository} and create copies of
+ * {@link MultiDataSourceRepository} and create copies of
  * the repositories in the relevant packages.
  */
 @AutoService(Processor.class)

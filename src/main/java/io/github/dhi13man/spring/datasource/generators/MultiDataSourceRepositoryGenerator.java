@@ -1,10 +1,9 @@
-package com.dhi13man.spring.datasource.generators;
+package io.github.dhi13man.spring.datasource.generators;
 
-import static com.dhi13man.spring.datasource.utils.CommonStringUtils.toPascalCase;
-import static com.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils.createConstantStringFieldSpec;
+import static io.github.dhi13man.spring.datasource.utils.CommonStringUtils.toPascalCase;
 
-import com.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
-import com.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
+import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -14,6 +13,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
 import com.squareup.javapoet.TypeVariableName;
+import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +109,7 @@ public class MultiDataSourceRepositoryGenerator {
 
     // Create the bean name constant
     final FieldSpec repositoryBeanNameFieldSpec =
-        createConstantStringFieldSpec(REPOSITORY_BEAN_NAME, generatedTypename);
+        MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(REPOSITORY_BEAN_NAME, generatedTypename);
 
     // Add the Repository annotation
     final AnnotationSpec repositoryAnnotation = AnnotationSpec.builder(Repository.class)

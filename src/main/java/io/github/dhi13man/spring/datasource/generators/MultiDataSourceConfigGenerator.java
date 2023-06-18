@@ -1,15 +1,14 @@
-package com.dhi13man.spring.datasource.generators;
+package io.github.dhi13man.spring.datasource.generators;
 
 
-import static com.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils.createConstantStringFieldSpec;
-
-import com.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
-import com.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
+import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
+import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Modifier;
 import javax.persistence.EntityManagerFactory;
@@ -101,23 +100,23 @@ public class MultiDataSourceConfigGenerator {
     }
 
     // Constants exposing important bean names
-    final FieldSpec dataSourcePropertiesBeanNameField = createConstantStringFieldSpec(
+    final FieldSpec dataSourcePropertiesBeanNameField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_PROPERTIES_BEAN_NAME_CONSTANT_NAME,
         dataSourceName + DATA_SOURCE_PROPERTIES_BEAN_SUFFIX
     );
-    final FieldSpec dataSourceBeanNameField = createConstantStringFieldSpec(
+    final FieldSpec dataSourceBeanNameField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_BEAN_NAME_CONSTANT_NAME,
         dataSourceName + DATA_SOURCE_BEAN_SUFFIX
     );
-    final FieldSpec entityManagerFactoryBeanNameField = createConstantStringFieldSpec(
+    final FieldSpec entityManagerFactoryBeanNameField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         ENTITY_MANAGER_FACTORY_BEAN_NAME_CONSTANT_NAME,
         dataSourceName + ENTITY_MANAGER_FACTORY_BEAN_SUFFIX
     );
-    final FieldSpec transactionManagerBeanNameField = createConstantStringFieldSpec(
+    final FieldSpec transactionManagerBeanNameField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         TRANSACTION_MANAGER_BEAN_NAME_CONSTANT_NAME,
         dataSourceName + TRANSACTION_MANAGER_BEAN_SUFFIX
     );
-    final FieldSpec dataSourceEntityPackageField = createConstantStringFieldSpec(
+    final FieldSpec dataSourceEntityPackageField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_ENTITY_PACKAGES_CONSTANT_NAME,
         dataSourceEntityPackages
     );

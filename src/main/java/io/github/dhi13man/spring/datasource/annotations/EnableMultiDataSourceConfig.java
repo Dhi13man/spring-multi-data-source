@@ -1,4 +1,4 @@
-package com.dhi13man.spring.datasource.annotations;
+package io.github.dhi13man.spring.datasource.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
