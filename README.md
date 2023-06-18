@@ -18,7 +18,20 @@ service. This project aims to provide a solution to those limitations by providi
 annotations that can be used to generate the required Bean-providing configuration classes and
 repositories during the build process itself, which can then be used by the service.
 
-## EnableMultiDataSourceConfig and MultiDataSourceRepository Annotations
+## Table of Contents
+
+- [spring-multi-data-source](#spring-multi-data-source)
+    - [Table of Contents](#table-of-contents)
+    - [Introduction](#introduction)
+    - [Annotations Provided](#annotations-provided)
+        - [@EnableMultiDataSourceConfig](#enablemultidatasourceconfig)
+        - [@MultiDataSourceRepository](#multidatasourcerepository)
+    - [Usage](#usage)
+    - [Building From Source](#building-from-source)
+    - [Contributing](#contributing)
+    - [Resources](#resources)
+
+## Introduction
 
 The limitations of using multiple data sources in a single service in Spring are:
 
@@ -34,6 +47,8 @@ The limitations of using multiple data sources in a single service in Spring are
 To mitigate the above limitations, I have created two custom annotations in Java that can be used
 for configuring multi-data source configurations for a service. Let's break down each annotation:
 
+## Annotations Provided
+
 ### @EnableMultiDataSourceConfig
 
 - This annotation is used to enable multi-data source configuration for the service. This will
@@ -42,25 +57,25 @@ for configuring multi-data source configurations for a service. Let's break down
 - It can be applied to a class (target: `ElementType.TYPE`).
 
 - It has the following attributes:
-  - `exactEntityPackages`: An array of exact packages to scan for entities. These packages are
+    - `exactEntityPackages`: An array of exact packages to scan for entities. These packages are
       scanned to find the entities related to the data sources.
-  - `repositoryPackages`: An array of packages to scan for repositories. These packages are
+    - `repositoryPackages`: An array of packages to scan for repositories. These packages are
       scanned to find the repositories related to the data sources.
-  - `masterDataSourceName`: The name of the master data source. It is used to generate the
+    - `masterDataSourceName`: The name of the master data source. It is used to generate the
       master beans and name the generated classes, packages, and property paths for the data
       source properties.
-  - `dataSourceClassString`: The class name of the master data source. It defines the data
+    - `dataSourceClassString`: The class name of the master data source. It defines the data
       source bean type.
-  - `datasourcePropertiesPrefix`: The prefix of the master data source properties in the
+    - `datasourcePropertiesPrefix`: The prefix of the master data source properties in the
       application properties file.
-  - `hikariPropertiesPrefix`: The prefix of the Hikari data source properties in the
+    - `hikariPropertiesPrefix`: The prefix of the Hikari data source properties in the
       application properties file.
-  - `hibernateBeanContainerPropertyPath`: The path of the Hibernate bean container property in
+    - `hibernateBeanContainerPropertyPath`: The path of the Hibernate bean container property in
       the application properties.
-  - `generatedConfigPackage`: The package where the generated master data source config will
+    - `generatedConfigPackage`: The package where the generated master data source config will
       be placed. The generated config class with relevant beans will follow a specific naming
       format.
-  - `generatedRepositoryPackagePrefix`: The prefix of the package where the generated copies
+    - `generatedRepositoryPackagePrefix`: The prefix of the package where the generated copies
       of the repositories will be placed. The generated repositories will follow a specific
       naming format.
 
@@ -72,14 +87,15 @@ for configuring multi-data source configurations for a service. Let's break down
 - It can be applied to a method (target: `ElementType.METHOD`).
 
 - It has the following attributes:
-  - `dataSourceName` (or `value`): The name of the data source to use for the repository.
+    - `dataSourceName` (or `value`): The name of the data source to use for the repository.
 
 Both annotations are available at the source level and are not retained at runtime. They are
 intended to be used for generating code for configuring data sources during the build process.
 
-### Usage
+## Usage
 
-1. Add `spring-multi-data-source` as a dependency in your service with a scope of `provided`.
+1. Add `spring-multi-data-source` as a dependency in your service with a scope of `provided`. Eg.
+   for Maven:
 
    ```xml
    <dependency>
@@ -175,7 +191,30 @@ intended to be used for generating code for configuring data sources during the 
 8. Please always go through the generated code to learn more about what configs to give and what
    beans to use for each data source.
 
-### Resources
+## Building from Source (Maven)
+
+1. Clone the repository.
+2. Run `mvn clean install` to build the project and install it in your local maven repository.
+3. Add the dependency in your project as mentioned above.
+4. Run `mvn clean package` to build the project and generate the jar file.
+5. The jar file will be available in the `target` directory.
+6. Add the jar file as a dependency in your project.
+7. Run `mvn clean compile` or `mvn clean install` in your project to generate the code.
+8. The generated code will be available in the `target/generated-sources/annotations` directory.
+9. Add that directory as a generated sources root in your IDE.
+10. Use the generated code as mentioned above.
+
+## Contributing
+
+Please feel free to raise issues and submit pull requests. Please check
+out [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+
+## License
+
+This project is licensed under the GNU Lesser General Public License v3.0. Please check
+out [LICENSE](LICENSE) for more details.
+
+## Resources
 
 1. [Spring Boot Official Documentation on configuring multiple data sources](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#howto.data-access.configure-two-datasources)
 
