@@ -47,15 +47,6 @@ public @interface EnableMultiDataSourceConfig {
   String masterDataSourceName() default "master";
 
   /**
-   * The class name of the master data source.
-   * <p>
-   * The parsed class will be used to strictly define the data source bean type.
-   *
-   * @return the class name of the master data source.
-   */
-  String dataSourceClassString() default "com.zaxxer.hikari.HikariDataSource";
-
-  /**
    * The prefix of the master data source properties in the application properties file.
    *
    * @return the prefix of the master data source properties in the application properties file.

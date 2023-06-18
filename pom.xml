@@ -194,5 +194,5 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
 </project>

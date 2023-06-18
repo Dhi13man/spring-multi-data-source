@@ -64,8 +64,6 @@ for configuring multi-data source configurations for a service. Let's break down
   - `masterDataSourceName`: The name of the master data source. It is used to generate the
       master beans and name the generated classes, packages, and property paths for the data
       source properties.
-  - `dataSourceClassString`: The class name of the master data source. It defines the data
-      source bean type.
   - `datasourcePropertiesPrefix`: The prefix of the master data source properties in the
       application properties file.
   - `hikariPropertiesPrefix`: The prefix of the Hikari data source properties in the

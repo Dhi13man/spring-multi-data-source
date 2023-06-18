@@ -1,13 +1,13 @@
 package io.github.dhi13man.spring.datasource.generators;
 
 
-import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
-import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
+import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
+import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Modifier;
@@ -171,13 +171,8 @@ public class MultiDataSourceConfigGenerator {
     }
 
     // DataSource bean
-    final Class<? extends DataSource> dataSourceClass = parseClassWithStrictBase(
-        masterAnnotation.dataSourceClassString(),
-        DataSource.class
-    );
     final MethodSpec.Builder dataSourceMethod = createDataSourceBeanMethod(
         masterAnnotation.dataSourceClassPropertiesPrefix(),
-        dataSourceClass,
         dataSourceBeanNameField,
         dataSourcePropertiesBeanNameField
     );
@@ -255,7 +250,6 @@ public class MultiDataSourceConfigGenerator {
    *
    * @param dataSourceClassPropertiesPrefix       the prefix of the properties of the data source
    *                                              class in application.properties
-   * @param dataSourceClass                       the {@link DataSource} class
    * @param beanNameFieldSpec                     the {@link FieldSpec} for the bean name constant
    * @param dataSourcePropertiesBeanNameFieldSpec the {@link FieldSpec} for the
    *                                              {@link DataSourceProperties} dependency bean name
@@ -264,7 +258,6 @@ public class MultiDataSourceConfigGenerator {
    */
   private MethodSpec.Builder createDataSourceBeanMethod(
       String dataSourceClassPropertiesPrefix,
-      Class<? extends DataSource> dataSourceClass,
       FieldSpec beanNameFieldSpec,
       FieldSpec dataSourcePropertiesBeanNameFieldSpec
   ) {
@@ -292,12 +285,9 @@ public class MultiDataSourceConfigGenerator {
         .addAnnotation(beanAnnotation)
         .addAnnotation(configurationPropertiesAnnotation)
         .addModifiers(Modifier.PUBLIC)
-        .returns(dataSourceClass)
+        .returns(DataSource.class)
         .addParameter(dataSourcePropertiesParameter)
-        .addStatement(
-            "return dataSourceProperties.initializeDataSourceBuilder().type($T.class).build()",
-            dataSourceClass
-        );
+        .addStatement("return dataSourceProperties.initializeDataSourceBuilder().build()");
   }
 
   /**
@@ -416,34 +406,6 @@ public class MultiDataSourceConfigGenerator {
     return AnnotationSpec.builder(Bean.class)
         .addMember("name", "$N", beanNameFieldSpec)
         .build();
-  }
-
-  /**
-   * Parse a {@link String} into a {@link Class} with a strict base class.
-   *
-   * @param classString the {@link String} to parse
-   * @param baseClass   the base class the parsed {@link Class} must extend
-   * @param <T>         the type of the base class
-   * @return the parsed {@link Class}
-   */
-  private <T> Class<? extends T> parseClassWithStrictBase(String classString, Class<T> baseClass) {
-    try {
-      // Check that the class is a valid implementation of the base class
-      final Class<?> aClass = Class.forName(classString);
-      if (!baseClass.isAssignableFrom(aClass)) {
-        final String errorMessage = "Class " + classString
-            + " is not a valid " + baseClass.getSimpleName();
-        messager.printMessage(Kind.ERROR, errorMessage);
-        throw new IllegalArgumentException(errorMessage);
-      }
-
-      // Return the cast parsed class
-      return aClass.asSubclass(baseClass);
-    } catch (ClassNotFoundException e) {
-      final String errorMessage = "Unable to find class " + classString;
-      messager.printMessage(Kind.ERROR, errorMessage);
-      throw new IllegalArgumentException(errorMessage, e);
-    }
   }
 
   /**
