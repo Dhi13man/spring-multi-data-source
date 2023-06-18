@@ -169,8 +169,7 @@ public class MultiDataSourceRepositoryGenerator {
       final boolean shouldExcludeMethod = superMethod.getModifiers().contains(Modifier.PRIVATE)
           || superMethod.getModifiers().contains(Modifier.FINAL)
           || annotatedMethods.stream().anyMatch(
-          method -> method.getSimpleName().equals(superMethod.getSimpleName())
-              && method.getParameters().toString().equals(superMethod.getParameters().toString())
+          method -> isMethodSignatureMatching(superMethod, method, baseTypeNameToDerived)
       );
       if (shouldExcludeMethod) {
         continue;
@@ -193,6 +192,48 @@ public class MultiDataSourceRepositoryGenerator {
       overridenMethods.add(disabledSpec);
     }
     return overridenMethods;
+  }
+
+  /**
+   * Check if the method signatures of the given {@link ExecutableElement}s are matching.
+   *
+   * @param executableElement1 The first method
+   * @param executableElement2 The second method
+   * @return true if the method signatures are matching, false otherwise
+   */
+  private boolean isMethodSignatureMatching(
+      ExecutableElement executableElement1,
+      ExecutableElement executableElement2,
+      Map<TypeName, TypeName> baseTypeNameToDerived
+  ) {
+    // Name check
+    if (!executableElement2.getSimpleName().equals(executableElement1.getSimpleName())) {
+      return false;
+    }
+
+    // Parameter type check
+    final List<? extends VariableElement> parameters1 = executableElement1.getParameters();
+    final List<? extends VariableElement> parameters2 = executableElement2.getParameters();
+    if (parameters1.size() != parameters2.size()) {
+      return false;
+    }
+
+    for (int i = 0; i < parameters1.size(); i++) {
+      final TypeName parameter1 = recursivelyConvertType(
+          TypeName.get(parameters1.get(i).asType()),
+          baseTypeNameToDerived
+      );
+      final TypeName parameter2 = recursivelyConvertType(
+          TypeName.get(parameters2.get(i).asType()),
+          baseTypeNameToDerived
+      );
+      if (!parameter1.toString().equals(parameter2.toString())) {
+        return false;
+      }
+    }
+
+    // Return type check
+    return !executableElement1.getReturnType().equals(executableElement2.getReturnType());
   }
 
   /**

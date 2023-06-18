@@ -79,6 +79,9 @@ public @interface EnableMultiDataSourceConfig {
   /**
    * The package where the generated master data source config will be placed.
    * <p>
+   * If this is not provided, the generated config will be placed in the same package as the class
+   * annotated with @EnableMultiDataSourceConfig followed by .config
+   * <p>
    * The generated Config class with all the relevant beans will be placed in this package with the
    * following format:
    * <p>
@@ -86,10 +89,14 @@ public @interface EnableMultiDataSourceConfig {
    *
    * @return the package where the generated master data source config will be placed.
    */
-  String generatedConfigPackage() default "com.dhi13man.spring.datasource.config";
+  String generatedConfigPackage() default "";
 
   /**
    * The prefix of the package where the generated copies of the repositories will be placed.
+   * <p>
+   * If this is not provided, the generated repositories will be placed in the same package as the
+   * class annotated with @EnableMultiDataSourceConfig followed by .repositories and then
+   * .{snake_case_data_source_name}
    * <p>
    * The generated repositories will be placed in packages with the following format:
    * <p>
@@ -98,5 +105,5 @@ public @interface EnableMultiDataSourceConfig {
    * @return the prefix of the package where the generated copies of the repositories will be
    * placed.
    */
-  String generatedRepositoryPackagePrefix() default "com.dhi13man.spring.datasource.repository";
+  String generatedRepositoryPackagePrefix() default "";
 }

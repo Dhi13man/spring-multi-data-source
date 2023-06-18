@@ -90,7 +90,8 @@ public class MultiDataSourceConfigGenerator {
       String dataSourceConfigClassName,
       String dataSourcePropertiesPath,
       String[] dataSourceRepositoryPackages,
-      String[] dataSourceEntityPackages
+      String[] dataSourceEntityPackages,
+      String generatedRepositoryPackagePrefix
   ) {
     if (dataSourcePropertiesPath.equals(masterAnnotation.dataSourceClassPropertiesPrefix())) {
       final String errorMessage = "The data source properties path cannot be the same as the master"
@@ -152,7 +153,7 @@ public class MultiDataSourceConfigGenerator {
               .addMember(
                   "pattern",
                   "{\"$L\"}",
-                  masterAnnotation.generatedRepositoryPackagePrefix()
+                  generatedRepositoryPackagePrefix
               )
               .build()
       );

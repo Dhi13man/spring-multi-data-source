@@ -34,6 +34,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic.Kind;
+import org.springframework.util.StringUtils;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
@@ -46,6 +47,10 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   private static final String MULTI_DATA_SOURCE_CONFIG_SUFFIX = "DataSourceConfig";
 
   private static final String JPA_REPOSITORY_INTERFACE_NAME = "JpaRepository";
+
+  private static final String CONFIG_PACKAGE_SUFFIX = ".config";
+
+  private static final String REPOSITORIES_PACKAGE_SUFFIX = ".repositories";
 
   private Filer filer;
 
@@ -120,7 +125,14 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         .datasourcePropertiesPrefix() + "." + toKebabCase(masterDataSourceName);
     final String[] masterRepositoryPackages = masterAnnotation.repositoryPackages();
     final String[] masterExactEntityPackages = masterAnnotation.exactEntityPackages();
-    final String generatedConfigPackage = masterAnnotation.generatedConfigPackage();
+    final String generatedConfigPackage = StringUtils
+        .hasText(masterAnnotation.generatedConfigPackage())
+        ? masterAnnotation.generatedConfigPackage()
+        : masterAnnotationElement.getEnclosingElement().toString() + CONFIG_PACKAGE_SUFFIX;
+    final String generatedRepositoryPackagePrefix = StringUtils
+        .hasText(masterAnnotation.generatedRepositoryPackagePrefix())
+        ? masterAnnotation.generatedRepositoryPackagePrefix()
+        : masterAnnotationElement.getEnclosingElement().toString() + REPOSITORIES_PACKAGE_SUFFIX;
 
     // Validate the provided master data source values
     if (masterExactEntityPackages.length == 0) {
@@ -145,7 +157,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         masterDataSourceConfigClassName,
         masterDataSourceConfigPropertiesPath,
         masterRepositoryPackages,
-        masterExactEntityPackages
+        masterExactEntityPackages,
+        generatedRepositoryPackagePrefix
     );
     writeTypeSpecToPackage(generatedConfigPackage, masterConfigTypeSpec);
 
@@ -179,7 +192,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       final String dataSourcePropertiesPath = masterAnnotation.datasourcePropertiesPrefix() + "."
           + toKebabCase(dataSourceName);
       final String dataSourceRepositorySubPackage =
-          masterAnnotation.generatedRepositoryPackagePrefix() + "." + toSnakeCase(dataSourceName);
+          generatedRepositoryPackagePrefix + "." + toSnakeCase(dataSourceName);
 
       // Create the config class;
       final TypeSpec configTypeSpec = configGenerator.generateMultiDataSourceConfig(
@@ -188,7 +201,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
           dataSourceConfigClassName,
           dataSourcePropertiesPath,
           new String[]{dataSourceRepositorySubPackage},
-          dataSourceEntityPackages
+          dataSourceEntityPackages,
+          generatedRepositoryPackagePrefix
       );
       writeTypeSpecToPackage(generatedConfigPackage, configTypeSpec);
 
