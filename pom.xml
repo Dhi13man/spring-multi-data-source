@@ -118,7 +118,7 @@
       <artifactId>spring-data-jpa</artifactId>
       <groupId>org.springframework.data</groupId>
       <scope>provided</scope>
-      <version>${spring.boot.version}</version>
+      <version>2.6.10</version>
     </dependency>
 
     <dependency>
@@ -149,8 +149,8 @@
   </dependencies>
   <description>
     To mitigate Spring's limitations with multiple data sources in a single service, this
-    library provides two custom annotations in Java that make configuring multi-data source
-    applications easier.
+    library provides two custom annotations in Java that automatically generate all the required
+    bean definition configurations and package-segregated repositories, for each data source.
   </description>
   <url>http://www.github.com/dhi13man/spring-multi-data-source</url>
   <licenses>
@@ -190,7 +190,9 @@
   <properties>
     <java.version>11</java.version>
     <sonar.language>java</sonar.language>
-    <spring.boot.version>2.6.6</spring.boot.version>
+    <spring.boot.version>2.6.15</spring.boot.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
   <version>0.0.1</version>
 </project>
