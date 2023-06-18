@@ -5,7 +5,7 @@
 [![GitHub forks](https://img.shields.io/github/forks/dhi13man/spring-multi-data-source?style=social)](https://github.com/Dhi13man/spring-multi-data-source/network/members)
 [![GitHub Repo stars](https://img.shields.io/github/stars/dhi13man/spring-multi-data-source?style=social)](https://github.com/Dhi13man/spring-multi-data-source/stargazers)
 [![Last Commit](https://img.shields.io/github/last-commit/dhi13man/spring-multi-data-source)](https://github.com/Dhi13man/spring-multi-data-source/commits/main)
-[![Build, Format, Test](https://github.com/dhi13man/spring-multi-data-source/actions/workflows/java.yml/badge.svg)](https://github.com/Dhi13man/spring-multi-data-source/actions)
+[![Build, Format, Test](https://github.com/dhi13man/spring-multi-data-source/actions/workflows/maven.yml/badge.svg)](https://github.com/Dhi13man/spring-multi-data-source/actions)
 
 [![Language | Java](http://ForTheBadge.com/images/badges/made-with-java.svg)](https://www.java.com/en/)
 
