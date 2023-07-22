@@ -1,17 +1,21 @@
 package io.github.dhi13man.spring.datasource.processor;
 
-import static io.github.dhi13man.spring.datasource.utils.CommonStringUtils.toKebabCase;
-import static io.github.dhi13man.spring.datasource.utils.CommonStringUtils.toPascalCase;
-import static io.github.dhi13man.spring.datasource.utils.CommonStringUtils.toSnakeCase;
+import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.MULTIPLE_CLASSES_ANNOTATED_WITH_ENABLE_CONFIG_ANNOTATION;
+import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG;
+import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_REPOSITORY_METHOD_ANNOTATED_WITH_MULTI_DATA_SOURCE_REPOSITORY;
+import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG;
+import static io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils.toKebabCase;
+import static io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils.toPascalCase;
+import static io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils.toSnakeCase;
 
+import com.google.auto.service.AutoService;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
-import com.google.auto.service.AutoService;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -38,8 +42,8 @@ import org.springframework.util.StringUtils;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
- * {@link MultiDataSourceRepository} and create copies of
- * the repositories in the relevant packages.
+ * {@link MultiDataSourceRepository} and create copies of the repositories in the relevant
+ * packages.
  */
 @AutoService(Processor.class)
 public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
@@ -77,7 +81,10 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     this.messager = processingEnv.getMessager();
     this.elementUtils = processingEnv.getElementUtils();
     this.configGenerator = new MultiDataSourceConfigGenerator(messager);
-    this.repositoryGenerator = new MultiDataSourceRepositoryGenerator(messager);
+    this.repositoryGenerator = new MultiDataSourceRepositoryGenerator(
+        messager,
+        processingEnv.getTypeUtils()
+    );
   }
 
   /**
@@ -104,14 +111,11 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     final Set<? extends Element> annotatedElements = roundEnv
         .getElementsAnnotatedWith(EnableMultiDataSourceConfig.class);
     if (annotatedElements.isEmpty()) {
-      return true;
+      return false;
     }
     if (annotatedElements.size() > 1) {
-      final String errorMessage = "Multiple classes are annotated with "
-          + "@EnableMultiDataSourceConfig. Please annotate only one class with this "
-          + "annotation and provide the master data source name and entity packages in it.";
-      messager.printMessage(Kind.ERROR, errorMessage);
-      throw new IllegalStateException(errorMessage);
+      messager.printMessage(Kind.ERROR, MULTIPLE_CLASSES_ANNOTATED_WITH_ENABLE_CONFIG_ANNOTATION);
+      throw new IllegalStateException(MULTIPLE_CLASSES_ANNOTATED_WITH_ENABLE_CONFIG_ANNOTATION);
     }
 
     // Fetch Master data source config values
@@ -136,18 +140,12 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
 
     // Validate the provided master data source values
     if (masterExactEntityPackages.length == 0) {
-      final String errorMessage = "No entity packages are provided in "
-          + "@EnableMultiDataSourceConfig.exactEntityPackages. Please provide all the "
-          + "packages that hold your entities.";
-      messager.printMessage(Kind.ERROR, errorMessage);
-      throw new IllegalArgumentException(errorMessage);
+      messager.printMessage(Kind.ERROR, NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
+      throw new IllegalArgumentException(NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
     }
     if (masterRepositoryPackages.length == 0) {
-      final String errorMessage = "No repository packages are provided in "
-          + "@EnableMultiDataSourceConfig.repositoryPackages. Please provide all the packages "
-          + "(or a parent package) that hold your repositories.";
-      messager.printMessage(Kind.ERROR, errorMessage);
-      throw new IllegalArgumentException(errorMessage);
+      messager.printMessage(Kind.ERROR, NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG);
+      throw new IllegalArgumentException(NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG);
     }
 
     // Create the Master data source config class
@@ -166,11 +164,11 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     final Map<String, Set<ExecutableElement>> dataSourceToTargetExecutableElementsMap =
         createDataSourceToTargetElementsMap(roundEnv);
     if (dataSourceToTargetExecutableElementsMap.isEmpty()) {
-      final String errorMessage = "No repository method is annotated with "
-          + "@MultiDataSourceRepository. Please annotate at least one repository method "
-          + "with this annotation if you are using @EnableMultiDataSourceConfig";
-      messager.printMessage(Kind.WARNING, errorMessage);
-      return true;
+      messager.printMessage(
+          Kind.WARNING,
+          NO_REPOSITORY_METHOD_ANNOTATED_WITH_MULTI_DATA_SOURCE_REPOSITORY
+      );
+      return false;
     }
 
     // Process the target executable elements to produce the alternate data source config classes
@@ -221,17 +219,16 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         writeTypeSpecToPackage(dataSourceRepositorySubPackage, copiedTypeSpec);
       }
 
-      messager.printMessage(
-          Kind.NOTE,
-          "Generated config class " + generatedConfigPackage + "." + dataSourceConfigClassName
-              + " for data source " + dataSourceName + " and extended " + executableElements.size()
-              + " repositories to package " + dataSourceRepositorySubPackage + ".\nPlease add the "
-              + "config values to the relevant properties file at " + dataSourcePropertiesPath
-              + "\n"
-      );
+      final String generatedInfoString = "Generated config class " + generatedConfigPackage + "." +
+          dataSourceConfigClassName + " for data source " + dataSourceName + " and extended " +
+          executableElements.size() + " repositories to package " + dataSourceRepositorySubPackage
+          + ".\nPlease add the config values to the relevant properties file at "
+          + dataSourcePropertiesPath + "\n";
+      messager.printMessage(Kind.NOTE, generatedInfoString);
     }
-    // Claiming that annotations have been processed by this processor
-    return true;
+    // As per sonatype, return false to indicate that the annotation processor is not claiming
+    // the annotations: https://errorprone.info/bugpattern/DoNotClaimAnnotations
+    return false;
   }
 
   @Override
