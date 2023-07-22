@@ -39,70 +39,70 @@
       </plugin>
 
       <plugin>
-        <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.7</version>
-        <extensions>true</extensions>
         <configuration>
-          <serverId>ossrh</serverId>
-          <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
           <autoReleaseAfterClose>true</autoReleaseAfterClose>
+          <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+          <serverId>ossrh</serverId>
         </configuration>
+        <extensions>true</extensions>
+        <groupId>org.sonatype.plugins</groupId>
+        <version>1.6.7</version>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>2.2.1</version>
         <executions>
           <execution>
-            <id>attach-sources</id>
             <goals>
               <goal>jar-no-fork</goal>
             </goals>
+            <id>attach-sources</id>
           </execution>
         </executions>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>2.2.1</version>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
         <executions>
           <execution>
-            <id>attach-javadocs</id>
             <goals>
               <goal>jar</goal>
             </goals>
+            <id>attach-javadocs</id>
           </execution>
         </executions>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>2.9.1</version>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>1.5</version>
         <executions>
           <execution>
-            <id>sign-artifacts</id>
-            <phase>verify</phase>
             <goals>
               <goal>sign</goal>
             </goals>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
           </execution>
         </executions>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>1.5</version>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>2.5.3</version>
         <configuration>
           <autoVersionSubmodules>true</autoVersionSubmodules>
-          <useReleaseProfile>false</useReleaseProfile>
-          <releaseProfiles>release</releaseProfiles>
           <goals>deploy</goals>
+          <releaseProfiles>release</releaseProfiles>
+          <useReleaseProfile>false</useReleaseProfile>
         </configuration>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>2.5.3</version>
       </plugin>
     </plugins>
   </build>
@@ -152,19 +152,40 @@
     library provides two custom annotations in Java that automatically generate all the required
     bean definition configurations and package-segregated repositories, for each data source.
   </description>
-  <url>http://www.github.com/dhi13man/spring-multi-data-source</url>
+  <developers>
+    <developer>
+      <email>furyx.ds@gmail.com</email>
+      <name>Dhiman Seal</name>
+    </developer>
+  </developers>
+  <distributionManagement>
+    <repository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+  <groupId>io.github.dhi13man</groupId>
   <licenses>
     <license>
       <name>GNU GENERAL PUBLIC LICENSE</name>
       <url>https://www.gnu.org/licenses/gpl-3.0.en.html</url>
     </license>
   </licenses>
-  <developers>
-    <developer>
-      <name>Dhiman Seal</name>
-      <email>furyx.ds@gmail.com</email>
-    </developer>
-  </developers>
+
+  <modelVersion>4.0.0</modelVersion>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>jar</packaging>
+  <properties>
+    <java.version>11</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <sonar.language>java</sonar.language>
+    <spring.boot.version>2.6.15</spring.boot.version>
+  </properties>
   <scm>
     <connection>scm:git:git://github.com/Dhi13man/spring-multi-data-source.git</connection>
     <developerConnection>scm:git:ssh://github.com/Dhi13man/spring-multi-data-source.git
@@ -172,27 +193,6 @@
     <url>github.com/Dhi13man/spring-multi-data-source/tree/master</url>
   </scm>
 
-  <groupId>io.github.dhi13man</groupId>
-  <modelVersion>4.0.0</modelVersion>
-  <name>${project.groupId}:${project.artifactId}</name>
-  <packaging>jar</packaging>
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
-
-  <properties>
-    <java.version>11</java.version>
-    <sonar.language>java</sonar.language>
-    <spring.boot.version>2.6.15</spring.boot.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-  </properties>
-  <version>0.0.3</version>
+  <url>http://www.github.com/dhi13man/spring-multi-data-source</url>
+  <version>0.0.4</version>
 </project>
