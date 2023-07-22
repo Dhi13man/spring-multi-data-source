@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class CommonStringUtils {
+public final class MultiDataSourceCommonStringUtils {
 
   public static final String CAPITAL_LETTER_REGEX = "[A-Z]";
 
@@ -69,7 +69,7 @@ public final class CommonStringUtils {
    * @param input input string
    * @return list of strings
    */
-  public static List<String> splitByNonAlphaNumeric(String input) {
+  private static List<String> splitByNonAlphaNumeric(String input) {
     return Stream.of(input.split(NON_ALPHA_NUMERIC_REGEX))
         .filter(s -> !s.isEmpty())
         .collect(Collectors.toList());
@@ -81,7 +81,7 @@ public final class CommonStringUtils {
    * @param input input string
    * @return list of strings
    */
-  public static List<String> splitByCamelCase(String input) {
+  private static List<String> splitByCamelCase(String input) {
     return Stream.of(input.split(CAPITAL_LETTER_REGEX))
         .filter(s -> !s.isEmpty())
         .collect(Collectors.toList());

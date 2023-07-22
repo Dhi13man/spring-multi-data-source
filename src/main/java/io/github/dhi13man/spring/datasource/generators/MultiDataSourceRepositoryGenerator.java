@@ -1,9 +1,5 @@
 package io.github.dhi13man.spring.datasource.generators;
 
-import static io.github.dhi13man.spring.datasource.utils.CommonStringUtils.toPascalCase;
-
-import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
-import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -13,6 +9,9 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
 import com.squareup.javapoet.TypeVariableName;
+import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
+import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +27,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 import org.springframework.stereotype.Repository;
 
@@ -42,8 +42,11 @@ public class MultiDataSourceRepositoryGenerator {
 
   private final Messager messager;
 
-  public MultiDataSourceRepositoryGenerator(Messager messager) {
+  private final Types typeUtils;
+
+  public MultiDataSourceRepositoryGenerator(Messager messager, Types typeUtils) {
     this.messager = messager;
+    this.typeUtils = typeUtils;
   }
 
   /**
@@ -66,7 +69,7 @@ public class MultiDataSourceRepositoryGenerator {
       String dataSourceName
   ) {
     // Generate the class/interface definition
-    final String generatedTypename = toPascalCase(dataSourceName)
+    final String generatedTypename = MultiDataSourceCommonStringUtils.toPascalCase(dataSourceName)
         + typeElement.getSimpleName().toString();
     final Builder builder;
     switch (typeElement.getKind()) {
@@ -108,8 +111,8 @@ public class MultiDataSourceRepositoryGenerator {
         .collect(Collectors.toList());
 
     // Create the bean name constant
-    final FieldSpec repositoryBeanNameFieldSpec =
-        MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(REPOSITORY_BEAN_NAME, generatedTypename);
+    final FieldSpec repositoryBeanNameFieldSpec = MultiDataSourceGeneratorUtils
+        .createConstantStringFieldSpec(REPOSITORY_BEAN_NAME, generatedTypename);
 
     // Add the Repository annotation
     final AnnotationSpec repositoryAnnotation = AnnotationSpec.builder(Repository.class)
@@ -233,7 +236,8 @@ public class MultiDataSourceRepositoryGenerator {
     }
 
     // Return type check
-    return !executableElement1.getReturnType().equals(executableElement2.getReturnType());
+    return !typeUtils
+        .isSameType(executableElement1.getReturnType(), executableElement2.getReturnType());
   }
 
   /**
