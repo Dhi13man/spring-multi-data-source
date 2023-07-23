@@ -6,6 +6,7 @@
   - Had to use reflection for unit tests of generated Repository classes. Could it be better?
 - Made generated config classes abstract-able by introducing IMultiDataSourceConfig interface.
 - Some internal method name changes for consistency.
+- Excluded SLF4J, even as a provided dependency, as it is not required.
 
 ## [0.0.4] - 22nd July
 

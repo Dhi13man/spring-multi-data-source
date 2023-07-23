@@ -19,14 +19,16 @@ import org.springframework.transaction.PlatformTransactionManager;
 public interface IMultiDataSourceConfig {
 
   /**
-   * Get the data source properties for the data source.
+   * Get the {@link DataSourceProperties} properties for the data source to be used.
    *
    * @return The data source properties.
    */
   DataSourceProperties dataSourceProperties();
 
   /**
-   * Get the data source for the data source, using the data source properties.
+   * Get the {@link DataSource} instance for the data source to be used.
+   * <p>
+   * This is instantiated using the data source properties.
    *
    * @param dataSourceProperties The data source properties.
    * @return The data source.
@@ -34,7 +36,7 @@ public interface IMultiDataSourceConfig {
   DataSource dataSource(DataSourceProperties dataSourceProperties);
 
   /**
-   * Get the entity manager factory to be used with the data source.
+   * Get the entity manager factory to be used to interface with the data source.
    *
    * @param builder     The entity manager factory builder, used to build the entity manager
    * @param beanFactory The bean factory, used to create the entity manager factory bean
@@ -48,7 +50,7 @@ public interface IMultiDataSourceConfig {
   );
 
   /**
-   * Get the transaction manager to be used with the data source.
+   * Get the transaction manager to be used for the data source.
    *
    * @param entityManagerFactory The entity manager factory, used to create the transaction manager
    * @return The transaction manager.

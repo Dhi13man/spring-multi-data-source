@@ -128,6 +128,12 @@
       <groupId>org.springframework.data</groupId>
       <scope>provided</scope>
       <version>2.6.10</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>slf4j-api</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
