@@ -8,6 +8,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.config.MultiDataSourceConfigInterface;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Modifier;
@@ -202,6 +203,7 @@ public class MultiDataSourceConfigGenerator {
 
     // Create the config class
     return TypeSpec.classBuilder(dataSourceConfigClassName)
+        .addSuperinterface(MultiDataSourceConfigInterface.class)
         .addAnnotation(Configuration.class)
         .addAnnotation(enableJpaRepositoriesAnnotationBuilder.build())
         .addModifiers(Modifier.PUBLIC)
@@ -240,6 +242,7 @@ public class MultiDataSourceConfigGenerator {
     return MethodSpec.methodBuilder("dataSourceProperties")
         .addAnnotation(beanAnnotation)
         .addAnnotation(configurationPropertiesAnnotation)
+        .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
         .returns(DataSourceProperties.class)
         .addStatement("return new $T()", DataSourceProperties.class);
@@ -284,6 +287,7 @@ public class MultiDataSourceConfigGenerator {
     return MethodSpec.methodBuilder("dataSource")
         .addAnnotation(beanAnnotation)
         .addAnnotation(configurationPropertiesAnnotation)
+        .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
         .returns(DataSource.class)
         .addParameter(dataSourcePropertiesParameter)
@@ -333,6 +337,7 @@ public class MultiDataSourceConfigGenerator {
     // Create the method body
     return MethodSpec.methodBuilder("entityManagerFactory")
         .addAnnotation(beanAnnotation)
+        .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
         .returns(LocalContainerEntityManagerFactoryBean.class)
         .addParameter(builderParameter)
@@ -385,6 +390,7 @@ public class MultiDataSourceConfigGenerator {
     // Create the method body
     return MethodSpec.methodBuilder("transactionManager")
         .addAnnotation(beanAnnotation)
+        .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
         .returns(PlatformTransactionManager.class)
         .addParameter(entityManagerFactoryParameter)

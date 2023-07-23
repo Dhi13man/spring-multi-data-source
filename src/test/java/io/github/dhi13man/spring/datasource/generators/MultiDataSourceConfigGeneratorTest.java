@@ -2,10 +2,12 @@ package io.github.dhi13man.spring.datasource.generators;
 
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.config.MultiDataSourceConfigInterface;
 import io.github.dhi13man.spring.datasource.generators.config.MasterDataSourceConfig;
 import io.github.dhi13man.spring.datasource.generators.config.ReadReplicaDataSourceConfig;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Assertions;
@@ -25,143 +27,87 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 class MultiDataSourceConfigGeneratorTest {
 
+  /**
+   * The set of generated config classes to test the generation logic with.
+   * <p>
+   * Running mvn clean install will generate the classes in the
+   * target/generated-test-sources/annotations directory.
+   */
+  private final Set<MultiDataSourceConfigInterface> generatedConfigs = Set.of(
+      new MasterDataSourceConfig(),
+      new ReadReplicaDataSourceConfig()
+  );
+
   @Test
-  void generateMultiDataSourceMasterConfigGetDataSourceProperties() {
-    // Arrange
-    final MasterDataSourceConfig masterDataSourceConfig = new MasterDataSourceConfig(); // Generated config class
+  void generateMultiDataSourceConfigGetDataSourceProperties() {
+    for (final MultiDataSourceConfigInterface generatedConfig : generatedConfigs) {
+      // Act
+      final DataSourceProperties dataSourceProperties = generatedConfig.dataSourceProperties();
 
-    // Act
-    final DataSourceProperties dataSourceProperties = masterDataSourceConfig.dataSourceProperties();
-
-    // Assert
-    Assertions.assertNotNull(dataSourceProperties);
+      // Assert
+      Assertions.assertNotNull(dataSourceProperties);
+    }
   }
 
   @Test
-  void generateMultiDataSourceMasterConfigGetDataSourceUsingProperties() {
-    // Arrange
-    final MasterDataSourceConfig masterDataSourceConfig = new MasterDataSourceConfig(); // Generated config class
+  void generateMultiDataSourceConfigGetDataSourceUsingProperties() {
+    for (final MultiDataSourceConfigInterface generatedConfig : generatedConfigs) {
+      // Act
+      final DataSourceProperties dataSourceProperties = generatedConfig.dataSourceProperties();
+      dataSourceProperties.setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection.H2);
+      dataSourceProperties.setType(SingleConnectionDataSource.class);
+      final DataSource dataSource = generatedConfig.dataSource(dataSourceProperties);
 
-    // Act
-    final DataSourceProperties dataSourceProperties = masterDataSourceConfig.dataSourceProperties();
-    dataSourceProperties.setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection.H2);
-    dataSourceProperties.setType(SingleConnectionDataSource.class);
-    final DataSource dataSource = masterDataSourceConfig.dataSource(dataSourceProperties);
-
-    // Assert
-    Assertions.assertNotNull(dataSource);
+      // Assert
+      Assertions.assertNotNull(dataSource);
+    }
   }
 
   @Test
-  void generateMultiDataSourceMasterConfigGetEntityManagerFactory() {
-    // Arrange
-    final MasterDataSourceConfig masterDataSourceConfig = new MasterDataSourceConfig(); // Generated config class
-    final DefaultPersistenceUnitManager mockPersistentUnitManager =
-        new DefaultPersistenceUnitManager();
-    final EntityManagerFactoryBuilder mockEntityManagerFactoryBuilder = new EntityManagerFactoryBuilder(
-        new HibernateJpaVendorAdapter(),
-        new HashMap<>(),
-        mockPersistentUnitManager
-    );
-    final ConfigurableListableBeanFactory mockBeanFactory = Mockito
-        .mock(ConfigurableListableBeanFactory.class);
+  void generateMultiDataSourceConfigGetEntityManagerFactory() {
+    for (final MultiDataSourceConfigInterface generatedConfig : generatedConfigs) {
+      // Arrange
+      final DefaultPersistenceUnitManager mockPersistentUnitManager =
+          new DefaultPersistenceUnitManager();
+      final EntityManagerFactoryBuilder mockEntityManagerFactoryBuilder = new EntityManagerFactoryBuilder(
+          new HibernateJpaVendorAdapter(),
+          new HashMap<>(),
+          mockPersistentUnitManager
+      );
+      final ConfigurableListableBeanFactory mockBeanFactory = Mockito
+          .mock(ConfigurableListableBeanFactory.class);
 
-    // Act
-    final DataSourceProperties dataSourceProperties = masterDataSourceConfig.dataSourceProperties();
-    dataSourceProperties.setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection.H2);
-    dataSourceProperties.setType(SingleConnectionDataSource.class);
+      // Act
+      final DataSourceProperties dataSourceProperties = generatedConfig.dataSourceProperties();
+      dataSourceProperties.setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection.H2);
+      dataSourceProperties.setType(SingleConnectionDataSource.class);
 
-    final DataSource dataSource = masterDataSourceConfig.dataSource(dataSourceProperties);
-    final LocalContainerEntityManagerFactoryBean entityManagerFactory = masterDataSourceConfig
-        .entityManagerFactory(mockEntityManagerFactoryBuilder, mockBeanFactory, dataSource);
+      final DataSource dataSource = generatedConfig.dataSource(dataSourceProperties);
+      final LocalContainerEntityManagerFactoryBean entityManagerFactory = generatedConfig
+          .entityManagerFactory(mockEntityManagerFactoryBuilder, mockBeanFactory, dataSource);
 
-    // Assert
-    Assertions.assertNotNull(entityManagerFactory);
+      // Assert
+      Assertions.assertNotNull(entityManagerFactory);
+    }
   }
 
   @Test
-  void generateMultiDataSourceMasterConfigGetTransactionManager() {
-    // Arrange
-    final MasterDataSourceConfig masterDataSourceConfig = new MasterDataSourceConfig(); // Generated config class
-    final EntityManagerFactory mockEntityManagerFactory = Mockito
-        .mock(EntityManagerFactory.class);
+  void generateMultiDataSourceConfigGetTransactionManager() {
 
-    // Act
-    final PlatformTransactionManager transactionManager = masterDataSourceConfig
-        .transactionManager(mockEntityManagerFactory);
+    for (final MultiDataSourceConfigInterface generatedConfig : generatedConfigs) {
+      // Arrange
+      final EntityManagerFactory mockEntityManagerFactory = Mockito
+          .mock(EntityManagerFactory.class);
 
-    // Assert
-    Assertions.assertNotNull(transactionManager);
+      // Act
+      final PlatformTransactionManager transactionManager = generatedConfig
+          .transactionManager(mockEntityManagerFactory);
+
+      // Assert
+      Assertions.assertNotNull(transactionManager);
+    }
   }
 
-  @Test
-  void generateMultiDataSourceReplicaConfigGetDataSourceProperties() {
-    // Arrange
-    final ReadReplicaDataSourceConfig masterDataSourceConfig = new ReadReplicaDataSourceConfig(); // Generated config class
-
-    // Act
-    final DataSourceProperties dataSourceProperties = masterDataSourceConfig.dataSourceProperties();
-
-    // Assert
-    Assertions.assertNotNull(dataSourceProperties);
-  }
-
-  @Test
-  void generateMultiDataSourceReplicaConfigGetDataSourceUsingProperties() {
-    // Arrange
-    final ReadReplicaDataSourceConfig masterDataSourceConfig = new ReadReplicaDataSourceConfig(); // Generated config class
-
-    // Act
-    final DataSourceProperties dataSourceProperties = masterDataSourceConfig.dataSourceProperties();
-    dataSourceProperties.setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection.H2);
-    dataSourceProperties.setType(SingleConnectionDataSource.class);
-    final DataSource dataSource = masterDataSourceConfig.dataSource(dataSourceProperties);
-
-    // Assert
-    Assertions.assertNotNull(dataSource);
-  }
-
-  @Test
-  void generateMultiDataSourceReplicaConfigGetEntityManagerFactory() {
-    // Arrange
-    final ReadReplicaDataSourceConfig masterDataSourceConfig = new ReadReplicaDataSourceConfig(); // Generated config class
-    final DefaultPersistenceUnitManager mockPersistentUnitManager =
-        new DefaultPersistenceUnitManager();
-    final EntityManagerFactoryBuilder mockEntityManagerFactoryBuilder = new EntityManagerFactoryBuilder(
-        new HibernateJpaVendorAdapter(),
-        new HashMap<>(),
-        mockPersistentUnitManager
-    );
-    final ConfigurableListableBeanFactory mockBeanFactory = Mockito
-        .mock(ConfigurableListableBeanFactory.class);
-
-    // Act
-    final DataSourceProperties dataSourceProperties = masterDataSourceConfig.dataSourceProperties();
-    dataSourceProperties.setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection.H2);
-    dataSourceProperties.setType(SingleConnectionDataSource.class);
-
-    final DataSource dataSource = masterDataSourceConfig.dataSource(dataSourceProperties);
-    final LocalContainerEntityManagerFactoryBean entityManagerFactory = masterDataSourceConfig
-        .entityManagerFactory(mockEntityManagerFactoryBuilder, mockBeanFactory, dataSource);
-
-    // Assert
-    Assertions.assertNotNull(entityManagerFactory);
-  }
-
-  @Test
-  void generateMultiDataSourceReplicaConfigGetTransactionManager() {
-    // Arrange
-    final ReadReplicaDataSourceConfig masterDataSourceConfig = new ReadReplicaDataSourceConfig(); // Generated config class
-    final EntityManagerFactory mockEntityManagerFactory = Mockito
-        .mock(EntityManagerFactory.class);
-
-    // Act
-    final PlatformTransactionManager transactionManager = masterDataSourceConfig
-        .transactionManager(mockEntityManagerFactory);
-
-    // Assert
-    Assertions.assertNotNull(transactionManager);
-  }
 
   @EnableMultiDataSourceConfig(
       exactEntityPackages = "java.lang", // Object is entity
