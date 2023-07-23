@@ -181,7 +181,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     }
 
     // Create the Master data source config class
-    final TypeSpec masterConfigTypeSpec = configGenerator.generateMultiDataSourceConfig(
+    final TypeSpec masterConfigTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
         masterAnnotation,
         masterDataSourceName,
         masterDataSourceConfigClassName,
@@ -225,7 +225,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
           generatedRepositoryPackagePrefix + "." + toSnakeCase(dataSourceName);
 
       // Create the config class;
-      final TypeSpec configTypeSpec = configGenerator.generateMultiDataSourceConfig(
+      final TypeSpec configTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
           masterAnnotation,
           dataSourceName,
           dataSourceConfigClassName,

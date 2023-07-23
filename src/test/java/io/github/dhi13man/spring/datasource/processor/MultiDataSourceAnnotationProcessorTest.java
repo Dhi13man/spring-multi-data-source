@@ -16,7 +16,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -52,11 +51,6 @@ class MultiDataSourceAnnotationProcessorTest {
       mockConfigGenerator,
       mockRepositoryGenerator
   );
-
-  @BeforeEach
-  void setUp() {
-    Mockito.when(mockProcessingEnvironment.getMessager()).thenReturn(mockMessager);
-  }
 
   @Test
   void init() {
@@ -180,7 +174,7 @@ class MultiDataSourceAnnotationProcessorTest {
         .thenReturn(mockAnnotation);
     final TypeSpec mockConfigTypeSpec = TypeSpec.classBuilder("MockConfig").build();
     Mockito.when(
-        mockConfigGenerator.generateMultiDataSourceConfig(
+        mockConfigGenerator.generateMultiDataSourceConfigTypeElement(
             mockAnnotation,
             MOCK_MASTER_DATA_SOURCE_NAME,
             MOCK_MASTER_DATA_SOURCE_CONFIG_CLASS_NAME,

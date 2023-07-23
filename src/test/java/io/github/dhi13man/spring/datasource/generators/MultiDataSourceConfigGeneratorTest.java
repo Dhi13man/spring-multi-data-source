@@ -1,10 +1,9 @@
 package io.github.dhi13man.spring.datasource.generators;
 
-import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
-import io.github.dhi13man.spring.datasource.config.MultiDataSourceConfigInterface;
-import io.github.dhi13man.spring.datasource.generators.config.MasterDataSourceConfig;
-import io.github.dhi13man.spring.datasource.generators.config.ReadReplicaDataSourceConfig;
+import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
+import io.github.dhi13man.spring.datasource.config.config.MasterDataSourceConfig;
+import io.github.dhi13man.spring.datasource.config.config.ReadReplicaDataSourceConfig;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -33,14 +32,14 @@ class MultiDataSourceConfigGeneratorTest {
    * Running mvn clean install will generate the classes in the
    * target/generated-test-sources/annotations directory.
    */
-  private final Set<MultiDataSourceConfigInterface> generatedConfigs = Set.of(
+  private final Set<IMultiDataSourceConfig> generatedConfigs = Set.of(
       new MasterDataSourceConfig(),
       new ReadReplicaDataSourceConfig()
   );
 
   @Test
-  void generateMultiDataSourceConfigGetDataSourceProperties() {
-    for (final MultiDataSourceConfigInterface generatedConfig : generatedConfigs) {
+  void generateMultiDataSourceConfigTypeElementGetDataSourceProperties() {
+    for (final IMultiDataSourceConfig generatedConfig : generatedConfigs) {
       // Act
       final DataSourceProperties dataSourceProperties = generatedConfig.dataSourceProperties();
 
@@ -50,8 +49,8 @@ class MultiDataSourceConfigGeneratorTest {
   }
 
   @Test
-  void generateMultiDataSourceConfigGetDataSourceUsingProperties() {
-    for (final MultiDataSourceConfigInterface generatedConfig : generatedConfigs) {
+  void generateMultiDataSourceConfigTypeElementGetDataSourceUsingProperties() {
+    for (final IMultiDataSourceConfig generatedConfig : generatedConfigs) {
       // Act
       final DataSourceProperties dataSourceProperties = generatedConfig.dataSourceProperties();
       dataSourceProperties.setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection.H2);
@@ -64,8 +63,8 @@ class MultiDataSourceConfigGeneratorTest {
   }
 
   @Test
-  void generateMultiDataSourceConfigGetEntityManagerFactory() {
-    for (final MultiDataSourceConfigInterface generatedConfig : generatedConfigs) {
+  void generateMultiDataSourceConfigTypeElementGetEntityManagerFactory() {
+    for (final IMultiDataSourceConfig generatedConfig : generatedConfigs) {
       // Arrange
       final DefaultPersistenceUnitManager mockPersistentUnitManager =
           new DefaultPersistenceUnitManager();
@@ -92,9 +91,9 @@ class MultiDataSourceConfigGeneratorTest {
   }
 
   @Test
-  void generateMultiDataSourceConfigGetTransactionManager() {
+  void generateMultiDataSourceConfigTypeElementGetTransactionManager() {
 
-    for (final MultiDataSourceConfigInterface generatedConfig : generatedConfigs) {
+    for (final IMultiDataSourceConfig generatedConfig : generatedConfigs) {
       // Arrange
       final EntityManagerFactory mockEntityManagerFactory = Mockito
           .mock(EntityManagerFactory.class);
@@ -108,12 +107,7 @@ class MultiDataSourceConfigGeneratorTest {
     }
   }
 
-
-  @EnableMultiDataSourceConfig(
-      exactEntityPackages = "java.lang", // Object is entity
-      repositoryPackages = "io.github.dhi13man.spring.datasource.generators" // MockRepository is repository
-  )
-  private interface MockRepository extends JpaRepository<Object, Long> {
+  private interface MockRepositoryTestRepository extends JpaRepository<Object, Long> {
 
     @Override
     @MultiDataSourceRepository("read-replica")

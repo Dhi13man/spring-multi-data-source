@@ -16,7 +16,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 /**
  * This interface is followed by all the generated Multi Data Source Config classes.
  */
-public interface MultiDataSourceConfigInterface {
+public interface IMultiDataSourceConfig {
 
   /**
    * Get the data source properties for the data source.

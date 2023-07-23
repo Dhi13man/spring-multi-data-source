@@ -8,7 +8,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
-import io.github.dhi13man.spring.datasource.config.MultiDataSourceConfigInterface;
+import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Modifier;
@@ -84,7 +84,7 @@ public class MultiDataSourceConfigGenerator {
    *                                     data source are located
    * @return the {@link TypeSpec} for a data source Spring Configuration class
    */
-  public TypeSpec generateMultiDataSourceConfig(
+  public TypeSpec generateMultiDataSourceConfigTypeElement(
       EnableMultiDataSourceConfig masterAnnotation,
       String dataSourceName,
       String dataSourceConfigClassName,
@@ -203,7 +203,7 @@ public class MultiDataSourceConfigGenerator {
 
     // Create the config class
     return TypeSpec.classBuilder(dataSourceConfigClassName)
-        .addSuperinterface(MultiDataSourceConfigInterface.class)
+        .addSuperinterface(IMultiDataSourceConfig.class)
         .addAnnotation(Configuration.class)
         .addAnnotation(enableJpaRepositoriesAnnotationBuilder.build())
         .addModifiers(Modifier.PUBLIC)
