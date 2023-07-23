@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.AbstractProcessor;
@@ -33,6 +34,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -67,6 +69,37 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   private MultiDataSourceRepositoryGenerator repositoryGenerator;
 
   /**
+   * Constructor for the annotation processor to be run during compile time.
+   */
+  public MultiDataSourceAnnotationProcessor() {
+  }
+
+  /**
+   * Constructor for the annotation processor with dependency injection.
+   * <p>
+   * This constructor is used for testing purposes.
+   *
+   * @param filer               the filer to use for writing files
+   * @param messager            the messager to use for printing messages
+   * @param elementUtils        the element utils to use for getting packages
+   * @param configGenerator     the Multi Data Source config generator
+   * @param repositoryGenerator the Multi Data Source repository generator
+   */
+  public MultiDataSourceAnnotationProcessor(
+      Filer filer,
+      Messager messager,
+      Elements elementUtils,
+      MultiDataSourceConfigGenerator configGenerator,
+      MultiDataSourceRepositoryGenerator repositoryGenerator
+  ) {
+    this.filer = filer;
+    this.messager = messager;
+    this.elementUtils = elementUtils;
+    this.configGenerator = configGenerator;
+    this.repositoryGenerator = repositoryGenerator;
+  }
+
+  /**
    * {@inheritDoc}
    * <p>
    * Prepares the {@link Filer}, {@link Messager} and {@link Elements} for use in the processor.
@@ -77,14 +110,14 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   @Override
   public synchronized void init(ProcessingEnvironment processingEnv) {
     super.init(processingEnv);
-    this.filer = processingEnv.getFiler();
-    this.messager = processingEnv.getMessager();
-    this.elementUtils = processingEnv.getElementUtils();
-    this.configGenerator = new MultiDataSourceConfigGenerator(messager);
-    this.repositoryGenerator = new MultiDataSourceRepositoryGenerator(
-        messager,
-        processingEnv.getTypeUtils()
-    );
+    this.filer = Objects.nonNull(this.filer) ? this.filer : processingEnv.getFiler();
+    this.messager = Objects.nonNull(this.messager) ? this.messager : processingEnv.getMessager();
+    this.elementUtils = Objects.nonNull(this.elementUtils) ? this.elementUtils
+        : processingEnv.getElementUtils();
+    this.configGenerator = Objects.nonNull(this.configGenerator) ? this.configGenerator
+        : new MultiDataSourceConfigGenerator(messager);
+    this.repositoryGenerator = Objects.nonNull(this.repositoryGenerator) ? this.repositoryGenerator
+        : new MultiDataSourceRepositoryGenerator(messager, processingEnv.getTypeUtils());
   }
 
   /**
@@ -129,14 +162,13 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         .datasourcePropertiesPrefix() + "." + toKebabCase(masterDataSourceName);
     final String[] masterRepositoryPackages = masterAnnotation.repositoryPackages();
     final String[] masterExactEntityPackages = masterAnnotation.exactEntityPackages();
-    final String generatedConfigPackage = StringUtils
-        .hasText(masterAnnotation.generatedConfigPackage())
-        ? masterAnnotation.generatedConfigPackage()
-        : masterAnnotationElement.getEnclosingElement().toString() + CONFIG_PACKAGE_SUFFIX;
-    final String generatedRepositoryPackagePrefix = StringUtils
-        .hasText(masterAnnotation.generatedRepositoryPackagePrefix())
-        ? masterAnnotation.generatedRepositoryPackagePrefix()
-        : masterAnnotationElement.getEnclosingElement().toString() + REPOSITORIES_PACKAGE_SUFFIX;
+    final String masterConfigPackage = masterAnnotation.generatedConfigPackage();
+    final String masterRepositoryPackage = masterAnnotation.generatedRepositoryPackagePrefix();
+    final PackageElement masterElementPackage = elementUtils.getPackageOf(masterAnnotationElement);
+    final String generatedConfigPackage = StringUtils.hasText(masterConfigPackage)
+        ? masterConfigPackage : masterElementPackage + CONFIG_PACKAGE_SUFFIX;
+    final String generatedRepositoryPackagePrefix = StringUtils.hasText(masterRepositoryPackage)
+        ? masterRepositoryPackage : masterElementPackage + REPOSITORIES_PACKAGE_SUFFIX;
 
     // Validate the provided master data source values
     if (masterExactEntityPackages.length == 0) {
@@ -149,7 +181,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     }
 
     // Create the Master data source config class
-    final TypeSpec masterConfigTypeSpec = configGenerator.generateMultiDataSourceConfig(
+    final TypeSpec masterConfigTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
         masterAnnotation,
         masterDataSourceName,
         masterDataSourceConfigClassName,
@@ -193,7 +225,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
           generatedRepositoryPackagePrefix + "." + toSnakeCase(dataSourceName);
 
       // Create the config class;
-      final TypeSpec configTypeSpec = configGenerator.generateMultiDataSourceConfig(
+      final TypeSpec configTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
           masterAnnotation,
           dataSourceName,
           dataSourceConfigClassName,

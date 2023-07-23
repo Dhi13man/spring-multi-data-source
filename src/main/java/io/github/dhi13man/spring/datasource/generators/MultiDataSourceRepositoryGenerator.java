@@ -7,7 +7,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeSpec.Builder;
 import com.squareup.javapoet.TypeVariableName;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
@@ -71,7 +70,7 @@ public class MultiDataSourceRepositoryGenerator {
     // Generate the class/interface definition
     final String generatedTypename = MultiDataSourceCommonStringUtils.toPascalCase(dataSourceName)
         + typeElement.getSimpleName().toString();
-    final Builder builder;
+    final TypeSpec.Builder builder;
     switch (typeElement.getKind()) {
       case INTERFACE: {
         builder = TypeSpec.interfaceBuilder(generatedTypename);
