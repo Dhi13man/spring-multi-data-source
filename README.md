@@ -8,6 +8,9 @@
 [![GitHub issues](https://img.shields.io/github/issues/dhi13man/spring-multi-data-source)](https://github.com/Dhi13man/spring-multi-data-source/issues)
 [![Build, Format, Test](https://github.com/dhi13man/spring-multi-data-source/actions/workflows/maven.yml/badge.svg)](https://github.com/Dhi13man/spring-multi-data-source/actions)
 
+[![Apache Maven](https://img.shields.io/badge/apache_maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.dhi13man/spring-multi-data-source?style=for-the-badge&link=https%3A%2F%2Fmvnrepository.com%2Fartifact%2Fio.github.dhi13man%2Fspring-multi-data-source)](https://mvnrepository.com/artifact/io.github.dhi13man/spring-multi-data-source)
+
 [!["Buy Me A Coffee"](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20an%20Ego%20boost&emoji=%F0%9F%98%B3&slug=dhi13man&button_colour=FF5F5F&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00****)](https://www.buymeacoffee.com/dhi13man)
 
 Spring Boot has multiple limitations when it comes to using multiple data sources in a single
