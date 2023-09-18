@@ -350,6 +350,10 @@ public class MultiDataSourceConfigGenerator {
             dataSourceEntityPackagesFieldSpec,
             dataSourceBeanNameFieldSpec
         )
+        .addComment(
+            "Add the SpringBeanContainer to the hibernate properties to allow the use of Spring"
+                + " beans in JPQL queries"
+        )
         .addStatement(
             "emfb.getJpaPropertyMap().put($S, new $T($N))",
             hibernateBeanContainerPropertyPath,
