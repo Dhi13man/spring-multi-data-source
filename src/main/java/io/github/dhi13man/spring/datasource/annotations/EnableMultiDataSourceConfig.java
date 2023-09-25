@@ -62,6 +62,9 @@ public @interface EnableMultiDataSourceConfig {
 
   /**
    * The path of the hibernate bean container property in the application properties.
+   * <p>
+   * This is needed to manually set the hibernate bean container to the spring bean container to
+   * ensure that the hibernate beans like attribute converters are managed by spring.
    *
    * @return the prefix of the hibernate bean container properties in the application properties
    */
