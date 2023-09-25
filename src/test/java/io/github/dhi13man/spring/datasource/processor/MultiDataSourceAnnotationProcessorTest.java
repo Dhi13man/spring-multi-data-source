@@ -23,6 +23,8 @@ class MultiDataSourceAnnotationProcessorTest {
 
   private static final String MOCK_MASTER_DATA_SOURCE_NAME = "master";
 
+  private static final String MOCK_SLAVE_DATA_SOURCE_NAME = "slave";
+
   private static final String MOCK_TEST_PACKAGE = "com.test";
 
   private static final String MOCK_MASTER_DATA_SOURCE_CONFIG_CLASS_NAME = "MasterDataSourceConfig";
@@ -80,78 +82,6 @@ class MultiDataSourceAnnotationProcessorTest {
   }
 
   @Test
-  void processMoreThanOneAnnotatedElements() {
-    // Arrange
-    processor.init(mockProcessingEnvironment);
-    final Set<? extends TypeElement> annotations = Set
-        .of(Mockito.mock(TypeElement.class), Mockito.mock(TypeElement.class));
-    final RoundEnvironment mockRoundEnvironment = Mockito.mock(RoundEnvironment.class);
-    final Set<? extends Element> annotatedElements = Set.of(
-        Mockito.mock(TypeElement.class),
-        Mockito.mock(TypeElement.class)
-    );
-    Mockito.when(mockRoundEnvironment.getElementsAnnotatedWith(EnableMultiDataSourceConfig.class))
-        .then(invocation -> annotatedElements);
-
-    // Act and Assert IllegalStateException thrown
-    Assertions.assertThrows(
-        IllegalStateException.class,
-        () -> processor.process(annotations, mockRoundEnvironment)
-    );
-  }
-
-  @Test
-  void processOneAnnotatedElementNoExactEntityPackages() {
-    // Arrange
-    processor.init(mockProcessingEnvironment);
-    final Set<? extends TypeElement> annotations = Set.of(Mockito.mock(TypeElement.class));
-    final RoundEnvironment mockRoundEnvironment = Mockito.mock(RoundEnvironment.class);
-    final TypeElement mockAnnotatedElement = Mockito.mock(TypeElement.class);
-    Mockito.when(mockRoundEnvironment.getElementsAnnotatedWith(EnableMultiDataSourceConfig.class))
-        .then(invocation -> Set.of(mockAnnotatedElement));
-    final EnableMultiDataSourceConfig mockAnnotation = Mockito
-        .mock(EnableMultiDataSourceConfig.class);
-    Mockito.when(mockAnnotation.masterDataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
-    Mockito.when(mockAnnotation.generatedRepositoryPackagePrefix()).thenReturn(MOCK_TEST_PACKAGE);
-    Mockito.when(mockAnnotation.generatedConfigPackage()).thenReturn(MOCK_TEST_PACKAGE);
-    Mockito.when(mockAnnotation.exactEntityPackages()).thenReturn(new String[]{});
-    Mockito.when(mockAnnotatedElement.getAnnotation(EnableMultiDataSourceConfig.class))
-        .thenReturn(mockAnnotation);
-
-    // Act and Assert IllegalArgumentException thrown
-    Assertions.assertThrows(
-        IllegalArgumentException.class,
-        () -> processor.process(annotations, mockRoundEnvironment)
-    );
-  }
-
-  @Test
-  void processOneAnnotatedElementNoRepositoryPackages() {
-    // Arrange
-    processor.init(mockProcessingEnvironment);
-    final Set<? extends TypeElement> annotations = Set.of(Mockito.mock(TypeElement.class));
-    final RoundEnvironment mockRoundEnvironment = Mockito.mock(RoundEnvironment.class);
-    final TypeElement mockAnnotatedElement = Mockito.mock(TypeElement.class);
-    Mockito.when(mockRoundEnvironment.getElementsAnnotatedWith(EnableMultiDataSourceConfig.class))
-        .then(invocation -> Set.of(mockAnnotatedElement));
-    final EnableMultiDataSourceConfig mockAnnotation = Mockito
-        .mock(EnableMultiDataSourceConfig.class);
-    Mockito.when(mockAnnotation.masterDataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
-    Mockito.when(mockAnnotation.generatedRepositoryPackagePrefix()).thenReturn(MOCK_TEST_PACKAGE);
-    Mockito.when(mockAnnotation.generatedConfigPackage()).thenReturn(MOCK_TEST_PACKAGE);
-    Mockito.when(mockAnnotation.exactEntityPackages()).thenReturn(new String[]{MOCK_TEST_PACKAGE});
-    Mockito.when(mockAnnotation.repositoryPackages()).thenReturn(new String[]{});
-    Mockito.when(mockAnnotatedElement.getAnnotation(EnableMultiDataSourceConfig.class))
-        .thenReturn(mockAnnotation);
-
-    // Act and Assert IllegalArgumentException thrown
-    Assertions.assertThrows(
-        IllegalArgumentException.class,
-        () -> processor.process(annotations, mockRoundEnvironment)
-    );
-  }
-
-  @Test
   void processOneAnnotatedElementProperPackages() {
     // Arrange
     processor.init(mockProcessingEnvironment);
@@ -162,7 +92,7 @@ class MultiDataSourceAnnotationProcessorTest {
         .then(invocation -> Set.of(mockAnnotatedElement));
     final EnableMultiDataSourceConfig mockAnnotation = Mockito
         .mock(EnableMultiDataSourceConfig.class);
-    Mockito.when(mockAnnotation.masterDataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
+    Mockito.when(mockAnnotation.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
     Mockito.when(mockAnnotation.generatedRepositoryPackagePrefix()).thenReturn(MOCK_TEST_PACKAGE);
     Mockito.when(mockAnnotation.generatedConfigPackage()).thenReturn(MOCK_TEST_PACKAGE);
     final String[] mockPackages = {MOCK_TEST_PACKAGE};
@@ -188,6 +118,123 @@ class MultiDataSourceAnnotationProcessorTest {
     // Act and Assert NullPointerException thrown for now as JavaFile is not mock-able.
     Assertions.assertThrows(
         NullPointerException.class,
+        () -> processor.process(annotations, mockRoundEnvironment)
+    );
+  }
+
+  @Test
+  void processMoreThanOneAnnotatedElementsSameDatasource() {
+    // Arrange
+    processor.init(mockProcessingEnvironment);
+    final Set<? extends TypeElement> annotations = Set
+        .of(Mockito.mock(TypeElement.class), Mockito.mock(TypeElement.class));
+    final RoundEnvironment mockRoundEnvironment = Mockito.mock(RoundEnvironment.class);
+    final TypeElement mockAnnotatedElement1 = Mockito.mock(TypeElement.class);
+    final TypeElement mockAnnotatedElement2 = Mockito.mock(TypeElement.class);
+    final Set<? extends Element> annotatedElements = Set.of(
+        mockAnnotatedElement1,
+        mockAnnotatedElement2
+    );
+    Mockito.when(mockRoundEnvironment.getElementsAnnotatedWith(EnableMultiDataSourceConfig.class))
+        .then(invocation -> annotatedElements);
+    final EnableMultiDataSourceConfig mockAnnotation1 = Mockito
+        .mock(EnableMultiDataSourceConfig.class);
+    final EnableMultiDataSourceConfig mockAnnotation2 = Mockito
+        .mock(EnableMultiDataSourceConfig.class);
+    Mockito.when(mockAnnotatedElement1.getAnnotation(EnableMultiDataSourceConfig.class))
+        .thenReturn(mockAnnotation1);
+    Mockito.when(mockAnnotatedElement2.getAnnotation(EnableMultiDataSourceConfig.class))
+        .thenReturn(mockAnnotation2);
+    Mockito.when(mockAnnotation1.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
+    Mockito.when(mockAnnotation2.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
+
+    // Act and Assert IllegalStateException thrown
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> processor.process(annotations, mockRoundEnvironment)
+    );
+  }
+
+  @Test
+  void processMoreThanOneAnnotatedElementsDifferentDatasource() {
+    // Arrange
+    processor.init(mockProcessingEnvironment);
+    final Set<? extends TypeElement> annotations = Set
+        .of(Mockito.mock(TypeElement.class), Mockito.mock(TypeElement.class));
+    final RoundEnvironment mockRoundEnvironment = Mockito.mock(RoundEnvironment.class);
+    final TypeElement mockAnnotatedElement1 = Mockito.mock(TypeElement.class);
+    final TypeElement mockAnnotatedElement2 = Mockito.mock(TypeElement.class);
+    final Set<? extends Element> annotatedElements = Set.of(
+        mockAnnotatedElement1,
+        mockAnnotatedElement2
+    );
+    Mockito.when(mockRoundEnvironment.getElementsAnnotatedWith(EnableMultiDataSourceConfig.class))
+        .then(invocation -> annotatedElements);
+    final EnableMultiDataSourceConfig mockAnnotation1 = Mockito
+        .mock(EnableMultiDataSourceConfig.class);
+    final EnableMultiDataSourceConfig mockAnnotation2 = Mockito
+        .mock(EnableMultiDataSourceConfig.class);
+    Mockito.when(mockAnnotatedElement1.getAnnotation(EnableMultiDataSourceConfig.class))
+        .thenReturn(mockAnnotation1);
+    Mockito.when(mockAnnotatedElement2.getAnnotation(EnableMultiDataSourceConfig.class))
+        .thenReturn(mockAnnotation2);
+    Mockito.when(mockAnnotation1.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
+    Mockito.when(mockAnnotation2.dataSourceName()).thenReturn(MOCK_SLAVE_DATA_SOURCE_NAME);
+
+    // Act and Assert IllegalStateException thrown
+    Assertions.assertThrows(
+        NullPointerException.class,
+        () -> processor.process(annotations, mockRoundEnvironment)
+    );
+  }
+
+  @Test
+  void processOneAnnotatedElementNoExactEntityPackages() {
+    // Arrange
+    processor.init(mockProcessingEnvironment);
+    final Set<? extends TypeElement> annotations = Set.of(Mockito.mock(TypeElement.class));
+    final RoundEnvironment mockRoundEnvironment = Mockito.mock(RoundEnvironment.class);
+    final TypeElement mockAnnotatedElement = Mockito.mock(TypeElement.class);
+    Mockito.when(mockRoundEnvironment.getElementsAnnotatedWith(EnableMultiDataSourceConfig.class))
+        .then(invocation -> Set.of(mockAnnotatedElement));
+    final EnableMultiDataSourceConfig mockAnnotation = Mockito
+        .mock(EnableMultiDataSourceConfig.class);
+    Mockito.when(mockAnnotation.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
+    Mockito.when(mockAnnotation.generatedRepositoryPackagePrefix()).thenReturn(MOCK_TEST_PACKAGE);
+    Mockito.when(mockAnnotation.generatedConfigPackage()).thenReturn(MOCK_TEST_PACKAGE);
+    Mockito.when(mockAnnotation.exactEntityPackages()).thenReturn(new String[]{});
+    Mockito.when(mockAnnotatedElement.getAnnotation(EnableMultiDataSourceConfig.class))
+        .thenReturn(mockAnnotation);
+
+    // Act and Assert IllegalArgumentException thrown
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> processor.process(annotations, mockRoundEnvironment)
+    );
+  }
+
+  @Test
+  void processOneAnnotatedElementNoRepositoryPackages() {
+    // Arrange
+    processor.init(mockProcessingEnvironment);
+    final Set<? extends TypeElement> annotations = Set.of(Mockito.mock(TypeElement.class));
+    final RoundEnvironment mockRoundEnvironment = Mockito.mock(RoundEnvironment.class);
+    final TypeElement mockAnnotatedElement = Mockito.mock(TypeElement.class);
+    Mockito.when(mockRoundEnvironment.getElementsAnnotatedWith(EnableMultiDataSourceConfig.class))
+        .then(invocation -> Set.of(mockAnnotatedElement));
+    final EnableMultiDataSourceConfig mockAnnotation = Mockito
+        .mock(EnableMultiDataSourceConfig.class);
+    Mockito.when(mockAnnotation.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
+    Mockito.when(mockAnnotation.generatedRepositoryPackagePrefix()).thenReturn(MOCK_TEST_PACKAGE);
+    Mockito.when(mockAnnotation.generatedConfigPackage()).thenReturn(MOCK_TEST_PACKAGE);
+    Mockito.when(mockAnnotation.exactEntityPackages()).thenReturn(new String[]{MOCK_TEST_PACKAGE});
+    Mockito.when(mockAnnotation.repositoryPackages()).thenReturn(new String[]{});
+    Mockito.when(mockAnnotatedElement.getAnnotation(EnableMultiDataSourceConfig.class))
+        .thenReturn(mockAnnotation);
+
+    // Act and Assert IllegalArgumentException thrown
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
         () -> processor.process(annotations, mockRoundEnvironment)
     );
   }

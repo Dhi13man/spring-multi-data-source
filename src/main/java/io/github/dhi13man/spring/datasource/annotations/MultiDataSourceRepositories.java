@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
 public @interface MultiDataSourceRepositories {
 
   /**
-   * The array of {@link MultiDataSourceRepository} annotations q
+   * The array of {@link MultiDataSourceRepository} annotations.
    *
    * @return the array of {@link MultiDataSourceRepository} annotations
    */

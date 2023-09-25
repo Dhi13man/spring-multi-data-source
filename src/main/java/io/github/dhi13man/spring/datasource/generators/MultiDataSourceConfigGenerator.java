@@ -93,7 +93,7 @@ public class MultiDataSourceConfigGenerator {
       String[] dataSourceEntityPackages,
       String generatedRepositoryPackagePrefix
   ) {
-    if (dataSourcePropertiesPath.equals(masterAnnotation.dataSourceClassPropertiesPrefix())) {
+    if (dataSourcePropertiesPath.equals(masterAnnotation.dataSourceClassPropertiesPath())) {
       final String errorMessage = "The data source properties path cannot be the same as the master"
           + " data source class properties path: " + dataSourcePropertiesPath;
       messager.printMessage(Kind.ERROR, errorMessage);
@@ -142,7 +142,7 @@ public class MultiDataSourceConfigGenerator {
             dataSourceConfigClassName,
             transactionManagerBeanNameField
         );
-    final boolean isMasterConfig = dataSourceName.equals(masterAnnotation.masterDataSourceName());
+    final boolean isMasterConfig = dataSourceName.equals(masterAnnotation.dataSourceName());
     // Exclude the other data source repositories from the master data source config
     if (isMasterConfig) {
       enableJpaRepositoriesAnnotationBuilder.addMember(
@@ -173,7 +173,7 @@ public class MultiDataSourceConfigGenerator {
 
     // DataSource bean
     final MethodSpec.Builder dataSourceMethod = createDataSourceBeanMethod(
-        masterAnnotation.dataSourceClassPropertiesPrefix(),
+        masterAnnotation.dataSourceClassPropertiesPath(),
         dataSourceBeanNameField,
         dataSourcePropertiesBeanNameField
     );

@@ -2,7 +2,7 @@ package io.github.dhi13man.spring.datasource.generators;
 
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import io.github.dhi13man.spring.datasource.config.repositories.read_replica.ReadReplicaMockConfigTestRepository;
-import io.github.dhi13man.spring.datasource.config.repositories.replica_2.Replica2MockConfigTestRepository;
+import io.github.dhi13man.spring.datasource.config.repositories.replica_2.Replica2MockRepositoryTestRepository;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
@@ -17,18 +17,18 @@ class MultiDataSourceRepositoryGeneratorTest {
 
   private final Set<Class<? extends JpaRepository<Object, Long>>> generatedRepositoryClasses = Set.of(
       ReadReplicaMockConfigTestRepository.class,
-      Replica2MockConfigTestRepository.class
+      Replica2MockRepositoryTestRepository.class
   );
 
   @Test
   void generateRepositoryTypeElementWithAnnotatedMethods() {
     // Arrange
-    final Class<MockConfigTestRepository> mockConfigTestRepositoryClass =
-        MockConfigTestRepository.class;
+    final Class<MockRepositoryTestRepository> mockConfigTestRepositoryClass =
+        MockRepositoryTestRepository.class;
     final Class<ReadReplicaMockConfigTestRepository> readReplicaGeneratedClass =
         ReadReplicaMockConfigTestRepository.class;
-    final Class<Replica2MockConfigTestRepository> replica2GeneratedClass =
-        Replica2MockConfigTestRepository.class;
+    final Class<Replica2MockRepositoryTestRepository> replica2GeneratedClass =
+        Replica2MockRepositoryTestRepository.class;
 
     // Assert
     // Classes Generated
@@ -79,7 +79,7 @@ class MultiDataSourceRepositoryGeneratorTest {
     Assertions.assertTrue(findAllReplica2MockConfigTestRepository.isPresent());
   }
 
-  private interface MockConfigTestRepository extends JpaRepository<Object, Long> {
+  public interface MockRepositoryTestRepository extends JpaRepository<Object, Long> {
 
     @MultiDataSourceRepository("replica-2")
     Object findByCustomObjectId(long customObjectId);

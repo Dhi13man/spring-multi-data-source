@@ -1,6 +1,6 @@
 package io.github.dhi13man.spring.datasource.processor;
 
-import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.MULTIPLE_CLASSES_ANNOTATED_WITH_ENABLE_CONFIG_ANNOTATION;
+import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.MULTIPLE_ENABLE_CONFIG_ANNOTATIONS_FOR_ONE_DATASOURCE;
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG;
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_REPOSITORY_METHOD_ANNOTATED_WITH_MULTI_DATA_SOURCE_REPOSITORY;
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG;
@@ -12,12 +12,15 @@ import com.google.auto.service.AutoService;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
+import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfigs;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.dto.ElementAndConfigAnnotationHolder;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -140,64 +143,21 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
    */
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-    // Get all the DTOs annotated with @EnableMultiDataSourceConfig and validate count
-    final Set<? extends Element> annotatedElements = roundEnv
-        .getElementsAnnotatedWith(EnableMultiDataSourceConfig.class);
-    if (annotatedElements.isEmpty()) {
-      return false;
+    // Get all the elements annotated with @EnableMultiDataSourceConfig and make a map of the
+    // data source name to the annotation and the element on which it is declared
+    final Map<String, ElementAndConfigAnnotationHolder> dataSourceToConfigMap =
+        createDataSourceToEnableConfigAnnotationAndElementMap(roundEnv);
+    // Create all Datasource configs
+    for (final ElementAndConfigAnnotationHolder holder : dataSourceToConfigMap.values()) {
+      createDataSourceConfig(holder);
     }
-    if (annotatedElements.size() > 1) {
-      messager.printMessage(Kind.ERROR, MULTIPLE_CLASSES_ANNOTATED_WITH_ENABLE_CONFIG_ANNOTATION);
-      throw new IllegalStateException(MULTIPLE_CLASSES_ANNOTATED_WITH_ENABLE_CONFIG_ANNOTATION);
-    }
-
-    // Fetch Master data source config values
-    final Element masterAnnotationElement = annotatedElements.iterator().next();
-    final EnableMultiDataSourceConfig masterAnnotation = masterAnnotationElement
-        .getAnnotation(EnableMultiDataSourceConfig.class);
-    final String masterDataSourceName = masterAnnotation.masterDataSourceName();
-    final String masterDataSourceConfigClassName =
-        getDataSourceConfigClassName(masterDataSourceName);
-    final String masterDataSourceConfigPropertiesPath = masterAnnotation
-        .datasourcePropertiesPrefix() + "." + toKebabCase(masterDataSourceName);
-    final String[] masterRepositoryPackages = masterAnnotation.repositoryPackages();
-    final String[] masterExactEntityPackages = masterAnnotation.exactEntityPackages();
-    final String masterConfigPackage = masterAnnotation.generatedConfigPackage();
-    final String masterRepositoryPackage = masterAnnotation.generatedRepositoryPackagePrefix();
-    final PackageElement masterElementPackage = elementUtils.getPackageOf(masterAnnotationElement);
-    final String generatedConfigPackage = StringUtils.hasText(masterConfigPackage)
-        ? masterConfigPackage : masterElementPackage + CONFIG_PACKAGE_SUFFIX;
-    final String generatedRepositoryPackagePrefix = StringUtils.hasText(masterRepositoryPackage)
-        ? masterRepositoryPackage : masterElementPackage + REPOSITORIES_PACKAGE_SUFFIX;
-
-    // Validate the provided master data source values
-    if (masterExactEntityPackages.length == 0) {
-      messager.printMessage(Kind.ERROR, NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
-      throw new IllegalArgumentException(NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
-    }
-    if (masterRepositoryPackages.length == 0) {
-      messager.printMessage(Kind.ERROR, NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG);
-      throw new IllegalArgumentException(NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG);
-    }
-
-    // Create the Master data source config class
-    final TypeSpec masterConfigTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
-        masterAnnotation,
-        masterDataSourceName,
-        masterDataSourceConfigClassName,
-        masterDataSourceConfigPropertiesPath,
-        masterRepositoryPackages,
-        masterExactEntityPackages,
-        generatedRepositoryPackagePrefix
-    );
-    writeTypeSpecToPackage(generatedConfigPackage, masterConfigTypeSpec);
 
     // Get relevant alternate data source to target type elements map
     final Map<String, Set<ExecutableElement>> dataSourceToTargetExecutableElementsMap =
-        createDataSourceToTargetElementsMap(roundEnv);
+        createDataSourceToTargetElementsMap(roundEnv, dataSourceToConfigMap);
     if (dataSourceToTargetExecutableElementsMap.isEmpty()) {
       messager.printMessage(
-          Kind.WARNING,
+          Kind.NOTE,
           NO_REPOSITORY_METHOD_ANNOTATED_WITH_MULTI_DATA_SOURCE_REPOSITORY
       );
       return false;
@@ -206,39 +166,36 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     // Process the target executable elements to produce the alternate data source config classes
     for (final Entry<String, Set<ExecutableElement>> executableElementsEntry
         : dataSourceToTargetExecutableElementsMap.entrySet()) {
+      // Get the relevant details for this data source
+      final String dataSourceName = executableElementsEntry.getKey();
       final Set<ExecutableElement> executableElements = executableElementsEntry.getValue();
+      final Element annotatedElement = dataSourceToConfigMap.get(dataSourceName).getElement();
+      final EnableMultiDataSourceConfig annotation = dataSourceToConfigMap.get(dataSourceName)
+          .getAnnotation();
+
       // Create a map of type elements to executable elements for this data source
-      final Map<TypeElement, Set<ExecutableElement>> typeElementToExecutableElementsMap =
+      final Map<TypeElement, Set<ExecutableElement>> repositoryToMethodMap =
           createTypeElementToExecutableElementsMap(executableElements);
       // Get the entity packages related to this data source from the type elements
       // (entities will be provided in JPA Type parameters)
-      final String[] dataSourceEntityPackages = typeElementToExecutableElementsMap.keySet().stream()
+      final List<String> dataSourceEntityPackages = repositoryToMethodMap.keySet().stream()
           .map(this::getJpaRepositoryEntityPackage)
-          .toArray(String[]::new);
+          .collect(Collectors.toList());
+      dataSourceEntityPackages.addAll(List.of(annotation.exactEntityPackages()));
 
       // Get the data source name and other relevant details for this data source
-      final String dataSourceName = executableElementsEntry.getKey();
-      final String dataSourceConfigClassName = getDataSourceConfigClassName(dataSourceName);
-      final String dataSourcePropertiesPath = masterAnnotation.datasourcePropertiesPrefix() + "."
+      final String dataSourcePropertiesPath = annotation.datasourcePropertiesPrefix() + "."
           + toKebabCase(dataSourceName);
+      final PackageElement elementPackage = elementUtils.getPackageOf(annotatedElement);
+      final String repositoryPackage = annotation.generatedRepositoryPackagePrefix();
+      final String generatedRepositoryPackagePrefix = StringUtils.hasText(repositoryPackage)
+          ? repositoryPackage : elementPackage + REPOSITORIES_PACKAGE_SUFFIX;
       final String dataSourceRepositorySubPackage =
           generatedRepositoryPackagePrefix + "." + toSnakeCase(dataSourceName);
 
-      // Create the config class;
-      final TypeSpec configTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
-          masterAnnotation,
-          dataSourceName,
-          dataSourceConfigClassName,
-          dataSourcePropertiesPath,
-          new String[]{dataSourceRepositorySubPackage},
-          dataSourceEntityPackages,
-          generatedRepositoryPackagePrefix
-      );
-      writeTypeSpecToPackage(generatedConfigPackage, configTypeSpec);
-
       // Copy all the repositories to the relevant sub-package with only the annotated methods
       for (final Entry<TypeElement, Set<ExecutableElement>> typeToExecutableEntry
-          : typeElementToExecutableElementsMap.entrySet()) {
+          : repositoryToMethodMap.entrySet()) {
         final TypeElement typeElement = typeToExecutableEntry.getKey();
 
         // Get the annotated methods for this type element
@@ -251,11 +208,10 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         writeTypeSpecToPackage(dataSourceRepositorySubPackage, copiedTypeSpec);
       }
 
-      final String generatedInfoString = "Generated config class " + generatedConfigPackage + "." +
-          dataSourceConfigClassName + " for data source " + dataSourceName + " and extended " +
-          executableElements.size() + " repositories to package " + dataSourceRepositorySubPackage
-          + ".\nPlease add the config values to the relevant properties file at "
-          + dataSourcePropertiesPath + "\n";
+      final String generatedInfoString = "Generated config class " + " for data source "
+          + dataSourceName + " and extended " + executableElements.size() + " repositories to"
+          + " package " + dataSourceRepositorySubPackage + ".\nPlease add the config values to the"
+          + " relevant properties file at " + dataSourcePropertiesPath + "\n";
       messager.printMessage(Kind.NOTE, generatedInfoString);
     }
     // As per sonatype, return false to indicate that the annotation processor is not claiming
@@ -277,6 +233,111 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   }
 
   /**
+   * Creates a map of the data source name to the {@link ElementAndConfigAnnotationHolder} for the
+   * {@link EnableMultiDataSourceConfig} annotation and the element on which it is declared.
+   *
+   * @param roundEnv environment for information about the current and prior round
+   * @return map of the data source name to the {@link ElementAndConfigAnnotationHolder}.
+   */
+  private Map<String, ElementAndConfigAnnotationHolder> createDataSourceToEnableConfigAnnotationAndElementMap(
+      RoundEnvironment roundEnv
+  ) {
+    // Deal with @EnableMultiDataSourceConfigs container annotations
+    final List<ElementAndConfigAnnotationHolder> elementAndConfigAnnotationHolders = roundEnv
+        .getElementsAnnotatedWith(EnableMultiDataSourceConfig.class)
+        .stream()
+        .filter(element -> element instanceof TypeElement)
+        .map(TypeElement.class::cast)
+        .map(
+            element -> new ElementAndConfigAnnotationHolder(
+                element,
+                element.getAnnotation(EnableMultiDataSourceConfig.class)
+            )
+        )
+        .collect(Collectors.toList());
+
+    // Deal with @EnableMultiDataSourceConfigs container annotations
+    final Set<TypeElement> annotatedElements = roundEnv
+        .getElementsAnnotatedWith(EnableMultiDataSourceConfigs.class)
+        .stream()
+        .filter(element -> element instanceof TypeElement)
+        .map(TypeElement.class::cast)
+        .collect(Collectors.toSet());
+    for (final TypeElement element : annotatedElements) {
+      final EnableMultiDataSourceConfigs repositoriesAnnotation = element
+          .getAnnotation(EnableMultiDataSourceConfigs.class);
+      for (final EnableMultiDataSourceConfig configAnnotation : repositoriesAnnotation.value()) {
+        elementAndConfigAnnotationHolders
+            .add(new ElementAndConfigAnnotationHolder(element, configAnnotation));
+      }
+    }
+
+    // Validate that there is only one config per data source and create a map of the data source
+    // name to the config annotation and the element on which it is declared
+    final Map<String, ElementAndConfigAnnotationHolder> dataSourceToConfigMapWithUniqueKeys =
+        new HashMap<>();
+    for (final ElementAndConfigAnnotationHolder holder : elementAndConfigAnnotationHolders) {
+      final String dataSourceName = holder.getAnnotation().dataSourceName();
+      if (dataSourceToConfigMapWithUniqueKeys.containsKey(dataSourceName)) {
+        messager.printMessage(Kind.ERROR, MULTIPLE_ENABLE_CONFIG_ANNOTATIONS_FOR_ONE_DATASOURCE);
+        throw new IllegalArgumentException(MULTIPLE_ENABLE_CONFIG_ANNOTATIONS_FOR_ONE_DATASOURCE);
+      }
+      dataSourceToConfigMapWithUniqueKeys.put(dataSourceName, holder);
+    }
+    return dataSourceToConfigMapWithUniqueKeys;
+  }
+
+  /**
+   * Creates a data source config class for the {@link EnableMultiDataSourceConfig} annotation and
+   * the element on which it is declared.
+   *
+   * @param holder the {@link ElementAndConfigAnnotationHolder} for the
+   *               {@link EnableMultiDataSourceConfig} annotation and the element on which it is
+   *               declared
+   * @throws IllegalArgumentException if no entity packages or repository packages are provided in
+   *                                  the annotation
+   */
+  private void createDataSourceConfig(ElementAndConfigAnnotationHolder holder) {
+    // Get the relevant details from the annotation
+    final EnableMultiDataSourceConfig annotation = holder.getAnnotation();
+    final String dataSourceName = annotation.dataSourceName();
+    final String dataSourceConfigClassName = getDataSourceConfigClassName(dataSourceName);
+    final String dataSourceConfigPropertiesPath = annotation.datasourcePropertiesPrefix()
+        + "." + toKebabCase(dataSourceName);
+    final String[] repositoryPackages = annotation.repositoryPackages();
+    final String[] entityPackages = annotation.exactEntityPackages();
+    final PackageElement elementPackage = elementUtils.getPackageOf(holder.getElement());
+    final String configPackage = annotation.generatedConfigPackage();
+    final String generatedConfigPackage = StringUtils.hasText(configPackage) ? configPackage
+        : elementPackage + CONFIG_PACKAGE_SUFFIX;
+    final String repositoryPackage = annotation.generatedRepositoryPackagePrefix();
+    final String generatedRepositoryPackagePrefix = StringUtils.hasText(repositoryPackage)
+        ? repositoryPackage : elementPackage + REPOSITORIES_PACKAGE_SUFFIX;
+
+    // Validate the provided master data source values
+    if (entityPackages.length == 0) {
+      messager.printMessage(Kind.ERROR, NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
+      throw new IllegalArgumentException(NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
+    }
+    if (repositoryPackages.length == 0) {
+      messager.printMessage(Kind.ERROR, NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG);
+      throw new IllegalArgumentException(NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG);
+    }
+
+    // Create the Master data source config class
+    final TypeSpec masterConfigTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
+        annotation,
+        dataSourceName,
+        dataSourceConfigClassName,
+        dataSourceConfigPropertiesPath,
+        repositoryPackages,
+        entityPackages,
+        generatedRepositoryPackagePrefix
+    );
+    writeTypeSpecToPackage(generatedConfigPackage, masterConfigTypeSpec);
+  }
+
+  /**
    * Creates a map of the data source name to the set of ExecutableElements that are annotated with
    * {@link MultiDataSourceRepository} for that data source.
    * <p>
@@ -284,10 +345,14 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
    * annotation. Return a map grouped by the data source name to the set of ExecutableElements that
    * are annotated with {@link MultiDataSourceRepository} for that data source.
    *
-   * @param roundEnv environment for information about the current and prior round
+   * @param roundEnv              environment for information about the current and prior round
+   * @param dataSourceToConfigMap map of the data source name to the
+   *                              {@link ElementAndConfigAnnotationHolder}
+   * @return map of the data source name to the set of ExecutableElements that are annotated with
    */
   private Map<String, Set<ExecutableElement>> createDataSourceToTargetElementsMap(
-      RoundEnvironment roundEnv
+      RoundEnvironment roundEnv,
+      Map<String, ElementAndConfigAnnotationHolder> dataSourceToConfigMap
   ) {
     // Deal with individual @MultiDataSourceRepository annotations
     final Map<String, Set<ExecutableElement>> multiDataSourceRepositoryElementMap = roundEnv
@@ -321,6 +386,18 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         executableElements.add(element);
         multiDataSourceRepositoryElementMap.put(dataSourceName, executableElements);
       }
+    }
+
+    // Validate that all the data sources involved have a config
+    final Set<String> dataSourcesWithoutConfig = multiDataSourceRepositoryElementMap.keySet()
+        .stream()
+        .filter(dataSourceName -> !dataSourceToConfigMap.containsKey(dataSourceName))
+        .collect(Collectors.toSet());
+    if (!dataSourcesWithoutConfig.isEmpty()) {
+      final String errorMessage = "No config found for data sources: " + dataSourcesWithoutConfig
+          + ". Please provide a @EnableMultiDataSourceConfig annotation for each data source.";
+      messager.printMessage(Kind.ERROR, errorMessage);
+      throw new IllegalArgumentException(errorMessage);
     }
     return multiDataSourceRepositoryElementMap;
   }

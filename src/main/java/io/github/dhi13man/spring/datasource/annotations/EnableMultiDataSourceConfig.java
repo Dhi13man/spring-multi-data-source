@@ -1,6 +1,7 @@
 package io.github.dhi13man.spring.datasource.annotations;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -10,6 +11,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.SOURCE)
+@Repeatable(EnableMultiDataSourceConfigs.class)
 public @interface EnableMultiDataSourceConfig {
 
   /**
@@ -33,9 +35,9 @@ public @interface EnableMultiDataSourceConfig {
   String[] repositoryPackages() default {};
 
   /**
-   * The name of the master data source.
+   * The name of the data source.
    * <p>
-   * 1. This will be used to generate the master beans
+   * 1. This will be used to generate the data source beans
    * <p>
    * 2. The PascalCase version of this will be used to name the generated Classes
    * <p>
@@ -44,7 +46,7 @@ public @interface EnableMultiDataSourceConfig {
    * 4. The kebab-case version of this will be used to name the property paths from which the data
    * source properties will be read
    */
-  String masterDataSourceName() default "master";
+  String dataSourceName() default "master";
 
   /**
    * The prefix of the master data source properties in the application properties file.
@@ -58,17 +60,20 @@ public @interface EnableMultiDataSourceConfig {
    *
    * @return the prefix of the data source class properties in the application properties file.
    */
-  String dataSourceClassPropertiesPrefix() default "spring.datasource.hikari";
+  String dataSourceClassPropertiesPath() default "spring.datasource.hikari";
 
   /**
    * The path of the hibernate bean container property in the application properties.
+   * <p>
+   * This is needed to manually set the hibernate bean container to the spring bean container to
+   * ensure that the hibernate beans like attribute converters are managed by spring.
    *
    * @return the prefix of the hibernate bean container properties in the application properties
    */
   String hibernateBeanContainerPropertyPath() default "hibernate.resource.beans.container";
 
   /**
-   * The package where the generated master data source config will be placed.
+   * The package where the generated data source config will be placed.
    * <p>
    * If this is not provided, the generated config will be placed in the same package as the class
    * annotated with @EnableMultiDataSourceConfig followed by .config
