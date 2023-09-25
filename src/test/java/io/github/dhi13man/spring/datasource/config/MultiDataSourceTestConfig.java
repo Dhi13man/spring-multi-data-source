@@ -16,7 +16,8 @@ import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceCon
     dataSourceName = "replica-2",
     exactEntityPackages = "java.lang", // Object is entity
     repositoryPackages = "io.github.dhi13man.spring.datasource.generators", // MockRepository is repository
-    generatedConfigPackage = "io.github.dhi13man.spring.datasource.generated.config2"
+    generatedConfigPackage = "io.github.dhi13man.spring.datasource.generated.config2",
+    generatedRepositoryPackagePrefix = "io.github.dhi13man.spring.datasource.config.repositories"
 )
 @EnableMultiDataSourceConfig(
     dataSourceName = "read-replica",
