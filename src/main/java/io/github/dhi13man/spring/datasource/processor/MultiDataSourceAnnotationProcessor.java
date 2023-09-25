@@ -284,7 +284,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
    * annotation. Return a map grouped by the data source name to the set of ExecutableElements that
    * are annotated with {@link MultiDataSourceRepository} for that data source.
    *
-   * @param roundEnv environment for information about the current and prior round
+   * @param roundEnv              environment for information about the current and prior round
+   * @return map of the data source name to the set of ExecutableElements that are annotated with
    */
   private Map<String, Set<ExecutableElement>> createDataSourceToTargetElementsMap(
       RoundEnvironment roundEnv
