@@ -39,8 +39,6 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic.Kind;
 import org.springframework.util.StringUtils;
@@ -54,8 +52,6 @@ import org.springframework.util.StringUtils;
 public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
 
   private static final String MULTI_DATA_SOURCE_CONFIG_SUFFIX = "DataSourceConfig";
-
-  private static final String JPA_REPOSITORY_INTERFACE_NAME = "JpaRepository";
 
   private static final String CONFIG_PACKAGE_SUFFIX = ".config";
 
@@ -176,12 +172,6 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       // Create a map of type elements to executable elements for this data source
       final Map<TypeElement, Set<ExecutableElement>> repositoryToMethodMap =
           createTypeElementToExecutableElementsMap(executableElements);
-      // Get the entity packages related to this data source from the type elements
-      // (entities will be provided in JPA Type parameters)
-      final List<String> dataSourceEntityPackages = repositoryToMethodMap.keySet().stream()
-          .map(this::getJpaRepositoryEntityPackage)
-          .collect(Collectors.toList());
-      dataSourceEntityPackages.addAll(List.of(annotation.exactEntityPackages()));
 
       // Get the data source name and other relevant details for this data source
       final String dataSourcePropertiesPath = annotation.datasourcePropertiesPrefix() + "."
@@ -246,8 +236,6 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     final List<ElementAndConfigAnnotationHolder> elementAndConfigAnnotationHolders = roundEnv
         .getElementsAnnotatedWith(EnableMultiDataSourceConfig.class)
         .stream()
-        .filter(element -> element instanceof TypeElement)
-        .map(TypeElement.class::cast)
         .map(
             element -> new ElementAndConfigAnnotationHolder(
                 element,
@@ -257,13 +245,9 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         .collect(Collectors.toList());
 
     // Deal with @EnableMultiDataSourceConfigs container annotations
-    final Set<TypeElement> annotatedElements = roundEnv
-        .getElementsAnnotatedWith(EnableMultiDataSourceConfigs.class)
-        .stream()
-        .filter(element -> element instanceof TypeElement)
-        .map(TypeElement.class::cast)
-        .collect(Collectors.toSet());
-    for (final TypeElement element : annotatedElements) {
+    final Set<? extends Element> annotatedElements = roundEnv
+        .getElementsAnnotatedWith(EnableMultiDataSourceConfigs.class);
+    for (final Element element : annotatedElements) {
       final EnableMultiDataSourceConfigs repositoriesAnnotation = element
           .getAnnotation(EnableMultiDataSourceConfigs.class);
       for (final EnableMultiDataSourceConfig configAnnotation : repositoriesAnnotation.value()) {
@@ -314,7 +298,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     final String generatedRepositoryPackagePrefix = StringUtils.hasText(repositoryPackage)
         ? repositoryPackage : elementPackage + REPOSITORIES_PACKAGE_SUFFIX;
 
-    // Validate the provided master data source values
+    // Validate the provided data source values
     if (entityPackages.length == 0) {
       messager.printMessage(Kind.ERROR, NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
       throw new IllegalArgumentException(NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
@@ -324,7 +308,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       throw new IllegalArgumentException(NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG);
     }
 
-    // Create the Master data source config class
+    // Create the data source config class
     final TypeSpec masterConfigTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
         annotation,
         dataSourceName,
@@ -421,50 +405,6 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         )
     );
   }
-
-  /**
-   * Get associated entity package from the {@link TypeElement} after validating that it is a valid
-   * {@link org.springframework.data.jpa.repository.JpaRepository}
-   * <p>
-   * Jpa repositories are expected to extend
-   * {@link org.springframework.data.jpa.repository.JpaRepository} and have generic type parameters
-   * that extend entity classes.
-   *
-   * @param typeElement {@link TypeElement} to get the entity name from
-   * @return entity name
-   */
-  private String getJpaRepositoryEntityPackage(TypeElement typeElement) {
-    {
-      // Validate that the repository is a valid JPA repository
-      final List<? extends TypeMirror> interfaceList = typeElement.getInterfaces();
-      final boolean isEligibleTypeElement = interfaceList.isEmpty()
-          || !(interfaceList.get(0) instanceof DeclaredType)
-          || !((DeclaredType) interfaceList.get(0)).asElement().getSimpleName()
-          .toString().equals(JPA_REPOSITORY_INTERFACE_NAME);
-      if (isEligibleTypeElement) {
-        final String errorMessage = "Repository " + typeElement.getSimpleName() +
-            " is not a valid JPA repository.";
-        messager.printMessage(Kind.ERROR, errorMessage);
-        throw new IllegalArgumentException(errorMessage);
-      }
-
-      // Validate that the repository has proper generic type parameters
-      final DeclaredType inheritedJpaInterfaceType = (DeclaredType) interfaceList.get(0);
-      final List<? extends TypeMirror> jpaInterfaceTypeArguments = inheritedJpaInterfaceType
-          .getTypeArguments();
-      if (jpaInterfaceTypeArguments.isEmpty()) {
-        final String errorMessage = "Repository " + typeElement.getSimpleName()
-            + " needs to have Entity and key type arguments.";
-        messager.printMessage(Kind.ERROR, errorMessage);
-        throw new IllegalArgumentException(errorMessage);
-      }
-
-      // Get the package of the entity from the generic type parameters of the JPA repository
-      final Element entityElement = ((DeclaredType) jpaInterfaceTypeArguments.get(0)).asElement();
-      return elementUtils.getPackageOf(entityElement).toString();
-    }
-  }
-
 
   /**
    * Write a {@link TypeSpec} to a package using the {@link Filer}.
