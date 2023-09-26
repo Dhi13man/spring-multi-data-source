@@ -57,6 +57,8 @@ public class MultiDataSourceConfigGenerator {
 
   private static final String DATA_SOURCE_ENTITY_PACKAGES_CONSTANT_NAME = "DATA_SOURCE_ENTITY_PACKAGES";
 
+  private static final String ADD_THE_SPRING_BEAN_CONTAINER_TO_THE_HIBERNATE_PROPERTIES = "Add the SpringBeanContainer to the hibernate properties to allow the use of Spring beans in JPQL queries";
+
   private final Messager messager;
 
   public MultiDataSourceConfigGenerator(Messager messager) {
@@ -350,6 +352,7 @@ public class MultiDataSourceConfigGenerator {
             dataSourceEntityPackagesFieldSpec,
             dataSourceBeanNameFieldSpec
         )
+        .addComment(ADD_THE_SPRING_BEAN_CONTAINER_TO_THE_HIBERNATE_PROPERTIES)
         .addStatement(
             "emfb.getJpaPropertyMap().put($S, new $T($N))",
             hibernateBeanContainerPropertyPath,
