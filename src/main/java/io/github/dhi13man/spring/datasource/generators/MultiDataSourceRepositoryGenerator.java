@@ -188,7 +188,7 @@ public class MultiDataSourceRepositoryGenerator {
           .addStatement(
               "throw new $T($S)",
               UnsupportedOperationException.class,
-              "This method is disabled in the generated class!"
+              "This method is disabled for this data source!"
           )
           .build();
       overridenMethods.add(disabledSpec);

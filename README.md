@@ -18,8 +18,8 @@ service. This project aims to provide a solution to those limitations by providi
 annotations that can be used to generate the required Bean-providing configuration classes and
 repositories during the build process itself, which can then be used by the service.
 
-The best part is, the entirety of the generated code is clean, human-readable, and can be 
-directly carried over to the relevant packages of the main code if you no longer wish to be 
+The best part is, the entirety of the generated code is clean, human-readable, and can be
+directly carried over to the relevant packages of the main code if you no longer wish to be
 tied down to this library in the future.
 
 ## Table of Contents

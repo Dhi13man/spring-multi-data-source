@@ -1,7 +1,6 @@
 package io.github.dhi13man.spring.datasource.annotations;
 
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -11,7 +10,6 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.SOURCE)
-@Repeatable(EnableMultiDataSourceConfigs.class)
 public @interface EnableMultiDataSourceConfig {
 
   /**
@@ -19,6 +17,9 @@ public @interface EnableMultiDataSourceConfig {
    * <p>
    * This must be an exact package name, and not a prefix as custom entity managers can not
    * recursively scan entities inside nested packages.
+   * <p>
+   * If @MultiDataSourceRepository is used on any repository, the package of the entity that the
+   * repository is associated with will also be scanned for entities.
    *
    * @return the array of exact packages to scan for entities.
    */
@@ -35,42 +36,11 @@ public @interface EnableMultiDataSourceConfig {
   String[] repositoryPackages() default {};
 
   /**
-   * The name of the data source.
-   * <p>
-   * 1. This will be used to generate the data source beans
-   * <p>
-   * 2. The PascalCase version of this will be used to name the generated Classes
-   * <p>
-   * 3. The camelCase version of this will be used to name the generated packages
-   * <p>
-   * 4. The kebab-case version of this will be used to name the property paths from which the data
-   * source properties will be read
-   */
-  String dataSourceName() default "master";
-
-  /**
    * The prefix of the master data source properties in the application properties file.
    *
    * @return the prefix of the master data source properties in the application properties file.
    */
   String datasourcePropertiesPrefix() default "spring.datasource";
-
-  /**
-   * The key of the data source class properties in the application properties file.
-   *
-   * @return the prefix of the data source class properties in the application properties file.
-   */
-  String dataSourceClassPropertiesPath() default "spring.datasource.hikari";
-
-  /**
-   * The path of the hibernate bean container property in the application properties.
-   * <p>
-   * This is needed to manually set the hibernate bean container to the spring bean container to
-   * ensure that the hibernate beans like attribute converters are managed by spring.
-   *
-   * @return the prefix of the hibernate bean container properties in the application properties
-   */
-  String hibernateBeanContainerPropertyPath() default "hibernate.resource.beans.container";
 
   /**
    * The package where the generated data source config will be placed.
@@ -102,4 +72,51 @@ public @interface EnableMultiDataSourceConfig {
    * placed.
    */
   String generatedRepositoryPackagePrefix() default "";
+
+  DataSourceConfig[] dataSourceConfigs() default {
+      @DataSourceConfig(dataSourceName = "master", isPrimary = true)
+  };
+
+  @interface DataSourceConfig {
+
+    /**
+     * The name of the data source.
+     * <p>
+     * 1. This will be used to generate the data source beans
+     * <p>
+     * 2. The PascalCase version of this will be used to name the generated Classes
+     * <p>
+     * 3. The camelCase version of this will be used to name the generated packages
+     * <p>
+     * 4. The kebab-case version of this will be used to name the property paths from which the data
+     * source properties will be read
+     */
+    String dataSourceName() default "";
+
+    /**
+     * Whether this data source is the primary data source.
+     * <p>
+     * There must be exactly one primary data source.
+     *
+     * @return whether this data source is the primary data source.
+     */
+    boolean isPrimary() default false;
+
+    /**
+     * The key of the data source class properties in the application properties file.
+     *
+     * @return the prefix of the data source class properties in the application properties file.
+     */
+    String dataSourceClassPropertiesPath() default "spring.datasource.hikari";
+
+    /**
+     * The path of the hibernate bean container property in the application properties.
+     * <p>
+     * This is needed to manually set the hibernate bean container to the spring bean container to
+     * ensure that the hibernate beans like attribute converters are managed by spring.
+     *
+     * @return the prefix of the hibernate bean container properties in the application properties
+     */
+    String hibernateBeanContainerPropertyPath() default "hibernate.resource.beans.container";
+  }
 }

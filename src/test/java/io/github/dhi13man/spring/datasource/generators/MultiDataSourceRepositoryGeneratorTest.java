@@ -1,9 +1,10 @@
 package io.github.dhi13man.spring.datasource.generators;
 
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
-import io.github.dhi13man.spring.datasource.config.repositories.read_replica.ReadReplicaMockConfigTestRepository;
-import io.github.dhi13man.spring.datasource.config.repositories.replica_2.Replica2MockRepositoryTestRepository;
+import io.github.dhi13man.spring.datasource.generated.repositories.read_replica.ReadReplicaMockConfigTestRepository;
+import io.github.dhi13man.spring.datasource.generated.repositories.replica_2.Replica2MockRepositoryTestRepository;
 import java.lang.reflect.Method;
+import java.security.Security;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -15,7 +16,7 @@ import org.springframework.lang.NonNull;
 
 class MultiDataSourceRepositoryGeneratorTest {
 
-  private final Set<Class<? extends JpaRepository<Object, Long>>> generatedRepositoryClasses = Set.of(
+  private final Set<Class<? extends JpaRepository<?, Long>>> generatedRepositoryClasses = Set.of(
       ReadReplicaMockConfigTestRepository.class,
       Replica2MockRepositoryTestRepository.class
   );
@@ -79,7 +80,7 @@ class MultiDataSourceRepositoryGeneratorTest {
     Assertions.assertTrue(findAllReplica2MockConfigTestRepository.isPresent());
   }
 
-  public interface MockRepositoryTestRepository extends JpaRepository<Object, Long> {
+  public interface MockRepositoryTestRepository extends JpaRepository<Security, Long> {
 
     @MultiDataSourceRepository("replica-2")
     Object findByCustomObjectId(long customObjectId);
@@ -87,7 +88,7 @@ class MultiDataSourceRepositoryGeneratorTest {
     @Override
     @MultiDataSourceRepository("read-replica")
     @NonNull
-    List<Object> findAll();
+    List<Security> findAll();
   }
 
 }

@@ -6,15 +6,13 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
-import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
+import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig.DataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
-import javax.annotation.processing.Messager;
 import javax.lang.model.element.Modifier;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
-import javax.tools.Diagnostic.Kind;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -59,10 +57,7 @@ public class MultiDataSourceConfigGenerator {
 
   private static final String ADD_THE_SPRING_BEAN_CONTAINER_TO_THE_HIBERNATE_PROPERTIES = "Add the SpringBeanContainer to the hibernate properties to allow the use of Spring beans in JPQL queries";
 
-  private final Messager messager;
-
-  public MultiDataSourceConfigGenerator(Messager messager) {
-    this.messager = messager;
+  public MultiDataSourceConfigGenerator() {
   }
 
   /**
@@ -72,8 +67,8 @@ public class MultiDataSourceConfigGenerator {
    * manager factory and transaction manager and provide the proper constants for the bean names, to
    * conveniently auto-wire them where needed.
    *
-   * @param masterAnnotation             the {@link EnableMultiDataSourceConfig} annotation
-   *                                     containing the master configurations
+   * @param dataSourceConfig             the {@link DataSourceConfig} for which the configuration
+   *                                     class is being generated
    * @param dataSourceName               the name of the data source for which the configuration
    *                                     class is being generated
    * @param dataSourceConfigClassName    the name of the data source configuration class being
@@ -87,7 +82,7 @@ public class MultiDataSourceConfigGenerator {
    * @return the {@link TypeSpec} for a data source Spring Configuration class
    */
   public TypeSpec generateMultiDataSourceConfigTypeElement(
-      EnableMultiDataSourceConfig masterAnnotation,
+      DataSourceConfig dataSourceConfig,
       String dataSourceName,
       String dataSourceConfigClassName,
       String dataSourcePropertiesPath,
@@ -95,13 +90,6 @@ public class MultiDataSourceConfigGenerator {
       String[] dataSourceEntityPackages,
       String generatedRepositoryPackagePrefix
   ) {
-    if (dataSourcePropertiesPath.equals(masterAnnotation.dataSourceClassPropertiesPath())) {
-      final String errorMessage = "The data source properties path cannot be the same as the master"
-          + " data source class properties path: " + dataSourcePropertiesPath;
-      messager.printMessage(Kind.ERROR, errorMessage);
-      throw new IllegalArgumentException(errorMessage);
-    }
-
     // Constants exposing important bean names
     final FieldSpec dataSourcePropertiesBeanNameField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_PROPERTIES_BEAN_NAME_CONSTANT_NAME,
@@ -144,7 +132,7 @@ public class MultiDataSourceConfigGenerator {
             dataSourceConfigClassName,
             transactionManagerBeanNameField
         );
-    final boolean isMasterConfig = dataSourceName.equals(masterAnnotation.dataSourceName());
+    final boolean isMasterConfig = dataSourceConfig.isPrimary();
     // Exclude the other data source repositories from the master data source config
     if (isMasterConfig) {
       enableJpaRepositoriesAnnotationBuilder.addMember(
@@ -175,7 +163,7 @@ public class MultiDataSourceConfigGenerator {
 
     // DataSource bean
     final MethodSpec.Builder dataSourceMethod = createDataSourceBeanMethod(
-        masterAnnotation.dataSourceClassPropertiesPath(),
+        dataSourceConfig.dataSourceClassPropertiesPath(),
         dataSourceBeanNameField,
         dataSourcePropertiesBeanNameField
     );
@@ -185,7 +173,7 @@ public class MultiDataSourceConfigGenerator {
 
     // EntityManagerFactory bean
     final MethodSpec.Builder entityManagerFactoryMethod = createEntityManagerFactoryBeanMethod(
-        masterAnnotation.hibernateBeanContainerPropertyPath(),
+        dataSourceConfig.hibernateBeanContainerPropertyPath(),
         dataSourceEntityPackageField,
         entityManagerFactoryBeanNameField,
         dataSourceBeanNameField

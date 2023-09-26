@@ -3,7 +3,7 @@ package io.github.dhi13man.spring.datasource.generators;
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.generated.config.MasterDataSourceConfig;
-import io.github.dhi13man.spring.datasource.generated.config2.ReadReplicaDataSourceConfig;
+import io.github.dhi13man.spring.datasource.generated.config.ReadReplicaDataSourceConfig;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
