@@ -25,16 +25,16 @@ tied down to this library in the future.
 ## Table of Contents
 
 - [spring-multi-data-source](#spring-multi-data-source)
-    - [Table of Contents](#table-of-contents)
-    - [Introduction](#introduction)
-    - [Annotations Provided](#annotations-provided)
-        - [@EnableMultiDataSourceConfig](#enablemultidatasourceconfig)
-        - [@MultiDataSourceRepository](#multidatasourcerepository)
-    - [Usage](#usage)
-    - [Building from Source (Maven)](#building-from-source-maven)
-    - [Contributing](#contributing)
-    - [License](#license)
-    - [Resources](#resources)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Annotations Provided](#annotations-provided)
+    - [@EnableMultiDataSourceConfig](#enablemultidatasourceconfig)
+    - [@MultiDataSourceRepository](#multidatasourcerepository)
+  - [Usage](#usage)
+  - [Building from Source (Maven)](#building-from-source-maven)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Resources](#resources)
 
 ## Introduction
 
@@ -125,6 +125,11 @@ intended to be used for generating code for configuring data sources during the 
       },
       exactEntityPackages = {
         "com.sample.project.sample_service.entities.mysql"
+      },
+      dataSourceConfigs = {
+          @DataSourceConfig(dataSourceName = "master", isPrimary = true),
+          @DataSourceConfig(dataSourceName = "replica-2"),
+          @DataSourceConfig(dataSourceName = "read-replica")
       }
    )
    public class ServiceConfig {

@@ -4,7 +4,6 @@ import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositor
 import io.github.dhi13man.spring.datasource.generated.repositories.read_replica.ReadReplicaMockConfigTestRepository;
 import io.github.dhi13man.spring.datasource.generated.repositories.replica_2.Replica2MockRepositoryTestRepository;
 import java.lang.reflect.Method;
-import java.security.Security;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -80,7 +79,7 @@ class MultiDataSourceRepositoryGeneratorTest {
     Assertions.assertTrue(findAllReplica2MockConfigTestRepository.isPresent());
   }
 
-  public interface MockRepositoryTestRepository extends JpaRepository<Security, Long> {
+  public interface MockRepositoryTestRepository extends JpaRepository<String, Long> {
 
     @MultiDataSourceRepository("replica-2")
     Object findByCustomObjectId(long customObjectId);
@@ -88,7 +87,7 @@ class MultiDataSourceRepositoryGeneratorTest {
     @Override
     @MultiDataSourceRepository("read-replica")
     @NonNull
-    List<Security> findAll();
+    List<String> findAll();
   }
 
 }
