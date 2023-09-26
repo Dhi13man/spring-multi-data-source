@@ -68,30 +68,37 @@ for configuring multi-data source configurations for a service. Let's break down
       scanned to find the repositories related to the data sources.
     - `datasourcePropertiesPrefix`: The prefix of the master data source properties in the
       application properties file.
-    - `generatedRepositoryPackagePrefix`: The prefix of the package where the generated copies
-      of the repositories will be placed. The generated repositories will follow a specific
-      naming format. If this is not specified, the generated repositories will be placed in the
-      same
-      package as the class where this annotation is applied, followed by `.repositories` and
-      then `.<data_source_name>`.
     - `generatedConfigPackage`: The package where the generated master data source config will
       be placed. The generated config class with relevant beans will follow a specific naming
       format. If this is not specified, the generated config will be placed in the same package as
       the class where this annotation is applied, followed by `.config`.
+    - `generatedRepositoryPackagePrefix`: The prefix of the package where the generated copies
+      of the repositories will be placed. The generated repositories will follow a specific
+      naming format. If this is not specified, the generated repositories will be placed in the
+      same package as the class where this annotation is applied, followed by `.repositories` and
+      then `.<data_source_name>`.
     - `dataSourceConfigs`: An array of `@DataSourceConfig` annotations. Each annotation represents
       a data source and its configuration.
-        - `dataSourceName`: The name of the data source. It is used to generate the date source
-          beans and name the generated classes, packages, and property paths for the data
-          source properties.
-        - `isPrimary`: Whether the data source is the primary data source. If this is set to
-          `true`, the generated beans for this data source will be annotated with `@Primary`. Hence
-          this should be set to `true` for only one data source.
-        - `dataSourceClassPropertiesPath`: The path of the data source class properties in the
-          application properties. Eg. `spring.datasource.hikari` for Hikari data sources.
-        - `hibernateBeanContainerPropertyPath`: The path of the Hibernate bean container property in
-          the application properties. This is needed to manually set the hibernate bean container to
-          the spring bean container to ensure that the hibernate beans like attribute converters are
-          managed by spring.
+
+#### @EnableMultiDataSourceConfig.DataSourceConfig
+
+- This sub-annotation is used to configure a data source and its properties for
+  `@EnableMultiDataSourceConfig`. It can not be applied directly anywhere other than in
+  the `dataSourceConfigs` attribute of `@EnableMultiDataSourceConfig`.
+
+- It has the following attributes:
+    - `dataSourceName`: The name of the data source. It is used to generate the date source
+      beans and name the generated classes, packages, and property paths for the data
+      source properties.
+    - `isPrimary`: Whether the data source is the primary data source. If this is set to
+      `true`, the generated beans for this data source will be annotated with `@Primary`. Hence
+      this should be set to `true` for only one data source.
+    - `dataSourceClassPropertiesPath`: The path of the data source class properties in the
+      application properties. Eg. `spring.datasource.hikari` for Hikari data sources.
+    - `hibernateBeanContainerPropertyPath`: The path of the Hibernate bean container property in
+      the application properties. This is needed to manually set the hibernate bean container to
+      the spring bean container to ensure that the hibernate beans like attribute converters are
+      managed by spring.
 
 ### @MultiDataSourceRepository
 

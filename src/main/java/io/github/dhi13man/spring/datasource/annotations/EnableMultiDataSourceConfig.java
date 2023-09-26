@@ -77,6 +77,8 @@ public @interface EnableMultiDataSourceConfig {
       @DataSourceConfig(dataSourceName = "master", isPrimary = true)
   };
 
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({})
   @interface DataSourceConfig {
 
     /**
