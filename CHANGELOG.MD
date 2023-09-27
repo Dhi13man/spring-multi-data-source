@@ -1,6 +1,6 @@
 # Releases
 
-## [0.1.0] - 26th September 2023
+## [0.1.1] - 26th September 2023
 
 ### [PR#11](https://github.com/Dhi13man/spring-multi-data-source/pull/11), [PR#12](https://github.com/Dhi13man/spring-multi-data-source/pull/12)
 
