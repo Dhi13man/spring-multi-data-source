@@ -99,11 +99,9 @@ public class MultiDataSourceCommonStringUtils {
     StringBuilder currentWord = new StringBuilder();
     final List<String> result = new ArrayList<>();
     for (final char c : input.toCharArray()) {
-      if (Character.isUpperCase(c)) {
-        if (currentWord.length() > 0) {
-          result.add(currentWord.toString());
-          currentWord = new StringBuilder();
-        }
+      if (Character.isUpperCase(c) && currentWord.length() > 0) {
+        result.add(currentWord.toString());
+        currentWord = new StringBuilder();
       }
       currentWord.append(c);
     }

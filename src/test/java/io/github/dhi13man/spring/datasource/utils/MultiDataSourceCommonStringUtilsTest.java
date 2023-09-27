@@ -10,110 +10,107 @@ public class MultiDataSourceCommonStringUtilsTest {
       .getInstance();
 
   @Test
-  public void toPascalCase_withSingleWord_returnsPascalCase() {
+  public void toPascalCase_returnsPascalCase() {
     // Arrange
-    final String input = "hello";
+    final String inputSingleWord = "hello";
+    final String inputMultipleWords = "hello_world";
+    final String inputEmpty = "";
+    final String inputMultipleWordsWithSymbols = "hello-world";
+    final String inputMultipleWordsWithMoreSymbols = "hello-#wo$rld";
+    final String inputMultipleWordsWithNumbers = "hello123world";
+    final String inputMultipleWordsCapitalized = "HelloWorld";
 
     // Act
-    final String result = multiDataSourceCommonStringUtils.toPascalCase(input);
+    final String resultSingleWord = multiDataSourceCommonStringUtils.toPascalCase(inputSingleWord);
+    final String resultMultipleWords = multiDataSourceCommonStringUtils
+        .toPascalCase(inputMultipleWords);
+    final String resultEmpty = multiDataSourceCommonStringUtils.toPascalCase(inputEmpty);
+    final String resultMultipleWordsWithSymbols = multiDataSourceCommonStringUtils
+        .toPascalCase(inputMultipleWordsWithSymbols);
+    final String resultMultipleWordsWithMoreSymbols = multiDataSourceCommonStringUtils
+        .toPascalCase(inputMultipleWordsWithMoreSymbols);
+    final String resultMultipleWordsWithNumbers = multiDataSourceCommonStringUtils
+        .toPascalCase(inputMultipleWordsWithNumbers);
+    final String resultMultipleWordsCapitalized = multiDataSourceCommonStringUtils
+        .toPascalCase(inputMultipleWordsCapitalized);
 
     // Assert
-    assertEquals("Hello", result);
+    assertEquals("Hello", resultSingleWord);
+    assertEquals("HelloWorld", resultMultipleWords);
+    assertEquals("", resultEmpty);
+    assertEquals("HelloWorld", resultMultipleWordsWithSymbols);
+    assertEquals("HelloWoRld", resultMultipleWordsWithMoreSymbols);
+    assertEquals("Hello123world", resultMultipleWordsWithNumbers);
+    assertEquals("HelloWorld", resultMultipleWordsCapitalized);
   }
 
   @Test
-  public void toPascalCase_withMultipleWords_returnsPascalCase() {
+  public void toSnakeCase_returnsSnakeCase() {
     // Arrange
-    final String input = "hello_world";
+    final String inputSingleWord = "Hello";
+    final String inputMultipleWords = "HelloWorld";
+    final String inputEmpty = "";
+    final String inputMultipleWordsWithSymbols = "hello-world";
+    final String inputMultipleWordsWithMoreSymbols = "hello-#wo$rld";
+    final String inputMultipleWordsWithNumbers = "hello123world";
+    final String inputMultipleWordsCapitalized = "HelloWorld";
 
     // Act
-    final String result = multiDataSourceCommonStringUtils.toPascalCase(input);
+    final String resultSingleWord = multiDataSourceCommonStringUtils.toSnakeCase(inputSingleWord);
+    final String resultMultipleWords = multiDataSourceCommonStringUtils
+        .toSnakeCase(inputMultipleWords);
+    final String resultEmpty = multiDataSourceCommonStringUtils.toSnakeCase(inputEmpty);
+    final String resultMultipleWordsWithSymbols = multiDataSourceCommonStringUtils
+        .toSnakeCase(inputMultipleWordsWithSymbols);
+    final String resultMultipleWordsWithMoreSymbols = multiDataSourceCommonStringUtils
+        .toSnakeCase(inputMultipleWordsWithMoreSymbols);
+    final String resultMultipleWordsWithNumbers = multiDataSourceCommonStringUtils
+        .toSnakeCase(inputMultipleWordsWithNumbers);
+    final String resultMultipleWordsCapitalized = multiDataSourceCommonStringUtils
+        .toSnakeCase(inputMultipleWordsCapitalized);
 
     // Assert
-    assertEquals("HelloWorld", result);
+    assertEquals("hello", resultSingleWord);
+    assertEquals("hello_world", resultMultipleWords);
+    assertEquals("", resultEmpty);
+    assertEquals("hello_world", resultMultipleWordsWithSymbols);
+    assertEquals("hello_wo_rld", resultMultipleWordsWithMoreSymbols);
+    assertEquals("hello123world", resultMultipleWordsWithNumbers);
+    assertEquals("hello_world", resultMultipleWordsCapitalized);
   }
 
   @Test
-  public void toPascalCase_withEmptyString_returnsEmptyString() {
+  public void toKebabCase_returnsKebabCase() {
     // Arrange
-    final String input = "";
+    final String inputSingleWord = "Hello";
+    final String inputMultipleWords = "HelloWorld";
+    final String inputEmpty = "";
+    final String inputMultipleWordsWithSymbols = "hello-world";
+    final String inputMultipleWordsWithMoreSymbols = "hello-#wo$rld";
+    final String inputMultipleWordsWithNumbers = "hello123world";
+    final String inputMultipleWordsCapitalized = "HelloWorld";
 
     // Act
-    final String result = multiDataSourceCommonStringUtils.toPascalCase(input);
+    final String resultSingleWord = multiDataSourceCommonStringUtils.toKebabCase(inputSingleWord);
+    final String resultMultipleWords = multiDataSourceCommonStringUtils
+        .toKebabCase(inputMultipleWords);
+    final String resultEmpty = multiDataSourceCommonStringUtils.toKebabCase(inputEmpty);
+    final String resultMultipleWordsWithSymbols = multiDataSourceCommonStringUtils
+        .toKebabCase(inputMultipleWordsWithSymbols);
+    final String resultMultipleWordsWithMoreSymbols = multiDataSourceCommonStringUtils
+        .toKebabCase(inputMultipleWordsWithMoreSymbols);
+    final String resultMultipleWordsWithNumbers = multiDataSourceCommonStringUtils
+        .toKebabCase(inputMultipleWordsWithNumbers);
+    final String resultMultipleWordsCapitalized = multiDataSourceCommonStringUtils
+        .toKebabCase(inputMultipleWordsCapitalized);
 
     // Assert
-    assertEquals("", result);
-  }
-
-  @Test
-  public void toSnakeCase_withSingleWord_returnsSnakeCase() {
-    // Arrange
-    final String input = "Hello";
-
-    // Act
-    final String result = multiDataSourceCommonStringUtils.toSnakeCase(input);
-
-    // Assert
-    assertEquals("hello", result);
-  }
-
-  @Test
-  public void toSnakeCase_withMultipleWords_returnsSnakeCase() {
-    // Arrange
-    final String input = "HelloWorld";
-
-    // Act
-    final String result = multiDataSourceCommonStringUtils.toSnakeCase(input);
-
-    // Assert
-    assertEquals("hello_world", result);
-  }
-
-  @Test
-  public void toSnakeCase_withEmptyString_returnsEmptyString() {
-    // Arrange
-    final String input = "";
-
-    // Act
-    final String result = multiDataSourceCommonStringUtils.toSnakeCase(input);
-
-    // Assert
-    assertEquals("", result);
-  }
-
-  @Test
-  public void toKebabCase_withSingleWord_returnsKebabCase() {
-    // Arrange
-    final String input = "Hello";
-
-    // Act
-    final String result = multiDataSourceCommonStringUtils.toKebabCase(input);
-
-    // Assert
-    assertEquals("hello", result);
-  }
-
-  @Test
-  public void toKebabCase_withMultipleWords_returnsKebabCase() {
-    // Arrange
-    final String input = "HelloWorld";
-
-    // Act
-    final String result = multiDataSourceCommonStringUtils.toKebabCase(input);
-
-    // Assert
-    assertEquals("hello-world", result);
-  }
-
-  @Test
-  public void toKebabCase_withEmptyString_returnsEmptyString() {
-    // Arrange
-    final String input = "";
-
-    // Act
-    final String result = multiDataSourceCommonStringUtils.toKebabCase(input);
-
-    // Assert
-    assertEquals("", result);
+    assertEquals("hello", resultSingleWord);
+    assertEquals("hello-world", resultMultipleWords);
+    assertEquals("", resultEmpty);
+    assertEquals("hello-world", resultMultipleWordsWithSymbols);
+    assertEquals("hello-wo-rld", resultMultipleWordsWithMoreSymbols);
+    assertEquals("hello123world", resultMultipleWordsWithNumbers);
+    assertEquals("hello-world", resultMultipleWordsCapitalized);
   }
 }
