@@ -55,9 +55,16 @@ public class MultiDataSourceConfigGenerator {
 
   private static final String DATA_SOURCE_ENTITY_PACKAGES_CONSTANT_NAME = "DATA_SOURCE_ENTITY_PACKAGES";
 
-  private static final String ADD_THE_SPRING_BEAN_CONTAINER_TO_THE_HIBERNATE_PROPERTIES = "Add the SpringBeanContainer to the hibernate properties to allow the use of Spring beans in JPQL queries";
+  private static final String ADD_THE_SPRING_BEAN_CONTAINER_TO_THE_HIBERNATE_PROPERTIES = "Adds the SpringBeanContainer to the hibernate properties to allow the use of Spring beans in JPQL queries";
 
-  public MultiDataSourceConfigGenerator() {
+  private static final String VALUE_FIELD_NAME_STRING = "value";
+
+  private final MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils;
+
+  public MultiDataSourceConfigGenerator(
+      MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils
+  ) {
+    this.multiDataSourceGeneratorUtils = multiDataSourceGeneratorUtils;
   }
 
   /**
@@ -93,23 +100,23 @@ public class MultiDataSourceConfigGenerator {
       String generatedRepositoryPackagePrefix
   ) {
     // Constants exposing important bean names
-    final FieldSpec dataSourcePropertiesBeanNameField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
+    final FieldSpec dataSourcePropertiesBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_PROPERTIES_BEAN_NAME_CONSTANT_NAME,
         dataSourceName + DATA_SOURCE_PROPERTIES_BEAN_SUFFIX
     );
-    final FieldSpec dataSourceBeanNameField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
+    final FieldSpec dataSourceBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_BEAN_NAME_CONSTANT_NAME,
         dataSourceName + DATA_SOURCE_BEAN_SUFFIX
     );
-    final FieldSpec entityManagerFactoryBeanNameField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
+    final FieldSpec entityManagerFactoryBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         ENTITY_MANAGER_FACTORY_BEAN_NAME_CONSTANT_NAME,
         dataSourceName + ENTITY_MANAGER_FACTORY_BEAN_SUFFIX
     );
-    final FieldSpec transactionManagerBeanNameField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
+    final FieldSpec transactionManagerBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         TRANSACTION_MANAGER_BEAN_NAME_CONSTANT_NAME,
         dataSourceName + TRANSACTION_MANAGER_BEAN_SUFFIX
     );
-    final FieldSpec dataSourceEntityPackageField = MultiDataSourceGeneratorUtils.createConstantStringFieldSpec(
+    final FieldSpec dataSourceEntityPackageField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_ENTITY_PACKAGES_CONSTANT_NAME,
         dataSourceEntityPackages
     );
@@ -263,7 +270,7 @@ public class MultiDataSourceConfigGenerator {
         .build();
     final AnnotationSpec qualifierAnnotation = AnnotationSpec.builder(Qualifier.class)
         .addMember(
-            "value",
+            VALUE_FIELD_NAME_STRING,
             "$N",
             dataSourcePropertiesBeanNameFieldSpec
         ).build();
@@ -310,7 +317,7 @@ public class MultiDataSourceConfigGenerator {
     // Create the method annotations
     final AnnotationSpec beanAnnotation = createBeanAnnotationFromFieldSpec(beanNamefieldSpec);
     final AnnotationSpec qualifierAnnotation = AnnotationSpec.builder(Qualifier.class)
-        .addMember("value", "$N", dataSourceBeanNameFieldSpec)
+        .addMember(VALUE_FIELD_NAME_STRING, "$N", dataSourceBeanNameFieldSpec)
         .build();
 
     // Create the method parameters
@@ -367,7 +374,7 @@ public class MultiDataSourceConfigGenerator {
     final AnnotationSpec beanAnnotation = createBeanAnnotationFromFieldSpec(beanNamefieldSpec);
     final AnnotationSpec qualifierAnnotation = AnnotationSpec.builder(Qualifier.class)
         .addMember(
-            "value",
+            VALUE_FIELD_NAME_STRING,
             "$N",
             entityManagerFactoryBeanNameFieldSpec
         )

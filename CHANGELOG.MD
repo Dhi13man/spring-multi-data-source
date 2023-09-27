@@ -6,6 +6,7 @@
 
 - Cosmetic improvements to generated code to include comment explaining hibernate bean container
   injection reasoning
+- Turned utils into singleton classes instead of static classes, and enforced them with Unit Tests.
 - Improved documentation
 
 ### [PR#13](https://github.com/Dhi13man/spring-multi-data-source/pull/13)

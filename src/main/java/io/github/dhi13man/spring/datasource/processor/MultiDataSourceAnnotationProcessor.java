@@ -6,9 +6,6 @@ import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErro
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG;
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_REPOSITORY_METHOD_ANNOTATED_WITH_MULTI_DATA_SOURCE_REPOSITORY;
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG;
-import static io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils.toKebabCase;
-import static io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils.toPascalCase;
-import static io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils.toSnakeCase;
 
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.JavaFile;
@@ -20,6 +17,8 @@ import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositor
 import io.github.dhi13man.spring.datasource.dto.EnableConfigAnnotationAndElementHolder;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
+import io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils;
+import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -68,9 +67,14 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
 
   private Elements elementUtils;
 
+  private MultiDataSourceCommonStringUtils commonStringUtils;
+
+  private MultiDataSourceGeneratorUtils generatorUtils;
+
   private MultiDataSourceConfigGenerator configGenerator;
 
   private MultiDataSourceRepositoryGenerator repositoryGenerator;
+
 
   /**
    * Constructor for the annotation processor to be run during compile time.
@@ -86,6 +90,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
    * @param filer               the filer to use for writing files
    * @param messager            the messager to use for printing messages
    * @param elementUtils        the element utils to use for getting packages
+   * @param commonStringUtils   Utility class for common string operations
+   * @param generatorUtils      Utility class for generating code for the Multi Data Source library
    * @param configGenerator     the Multi Data Source config generator
    * @param repositoryGenerator the Multi Data Source repository generator
    */
@@ -93,12 +99,16 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       Filer filer,
       Messager messager,
       Elements elementUtils,
+      MultiDataSourceCommonStringUtils commonStringUtils,
+      MultiDataSourceGeneratorUtils generatorUtils,
       MultiDataSourceConfigGenerator configGenerator,
       MultiDataSourceRepositoryGenerator repositoryGenerator
   ) {
     this.filer = filer;
     this.messager = messager;
     this.elementUtils = elementUtils;
+    this.commonStringUtils = commonStringUtils;
+    this.generatorUtils = generatorUtils;
     this.configGenerator = configGenerator;
     this.repositoryGenerator = repositoryGenerator;
   }
@@ -118,10 +128,19 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     this.messager = Objects.nonNull(this.messager) ? this.messager : processingEnv.getMessager();
     this.elementUtils = Objects.nonNull(this.elementUtils) ? this.elementUtils
         : processingEnv.getElementUtils();
+    this.commonStringUtils = Objects.nonNull(this.commonStringUtils) ? this.commonStringUtils
+        : MultiDataSourceCommonStringUtils.getInstance();
+    this.generatorUtils = Objects.nonNull(this.generatorUtils) ? this.generatorUtils
+        : MultiDataSourceGeneratorUtils.getInstance();
     this.configGenerator = Objects.nonNull(this.configGenerator) ? this.configGenerator
-        : new MultiDataSourceConfigGenerator();
+        : new MultiDataSourceConfigGenerator(this.generatorUtils);
     this.repositoryGenerator = Objects.nonNull(this.repositoryGenerator) ? this.repositoryGenerator
-        : new MultiDataSourceRepositoryGenerator(messager, processingEnv.getTypeUtils());
+        : new MultiDataSourceRepositoryGenerator(
+            this.messager,
+            processingEnv.getTypeUtils(),
+            this.commonStringUtils,
+            this.generatorUtils
+        );
   }
 
   /**
@@ -210,7 +229,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       final String generatedRepositoryPackagePrefix = StringUtils.hasText(repositoryPackage)
           ? repositoryPackage : elementPackage + REPOSITORIES_PACKAGE_SUFFIX;
       final String repositoryDataSourceSubPackage = generatedRepositoryPackagePrefix + "."
-          + toSnakeCase(dataSourceName);
+          + commonStringUtils.toSnakeCase(dataSourceName);
 
       // Copy all the repositories to the relevant sub-package with only the annotated methods
       for (final var typeToExecutableEntry : repositoryToMethodMap.entrySet()) {
@@ -345,7 +364,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     final String dataSourceName = dataSourceConfig.dataSourceName();
     final String dataSourceConfigClassName = getDataSourceConfigClassName(dataSourceName);
     final String dataSourceConfigPropertiesPath = annotation.datasourcePropertiesPrefix()
-        + "." + toKebabCase(dataSourceName);
+        + "." + commonStringUtils.toKebabCase(dataSourceName);
     final String[] repositoryPackages = annotation.repositoryPackages();
     final Set<String> entityPackages = new HashSet<>(Set.of(annotation.exactEntityPackages()));
     entityPackages.addAll(List.of(extraEntityPackages));
@@ -528,6 +547,6 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
    * @return the PascalCase data source config class name
    */
   private String getDataSourceConfigClassName(String dataSourceName) {
-    return toPascalCase(dataSourceName) + MULTI_DATA_SOURCE_CONFIG_SUFFIX;
+    return commonStringUtils.toPascalCase(dataSourceName) + MULTI_DATA_SOURCE_CONFIG_SUFFIX;
   }
 }

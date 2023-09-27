@@ -6,6 +6,8 @@ import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceCon
 import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
+import io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils;
+import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.processing.Filer;
@@ -41,6 +43,12 @@ class MultiDataSourceAnnotationProcessorTest {
 
   private final Elements mockElementUtils = Mockito.mock(Elements.class);
 
+  private final MultiDataSourceCommonStringUtils mockStringUtils = Mockito
+      .mock(MultiDataSourceCommonStringUtils.class);
+
+  private final MultiDataSourceGeneratorUtils mockGeneratorUtils = Mockito
+      .mock(MultiDataSourceGeneratorUtils.class);
+
   private final MultiDataSourceConfigGenerator mockConfigGenerator = Mockito
       .mock(MultiDataSourceConfigGenerator.class);
 
@@ -51,6 +59,8 @@ class MultiDataSourceAnnotationProcessorTest {
       mockFiler,
       mockMessager,
       mockElementUtils,
+      mockStringUtils,
+      mockGeneratorUtils,
       mockConfigGenerator,
       mockRepositoryGenerator
   );

@@ -43,9 +43,20 @@ public class MultiDataSourceRepositoryGenerator {
 
   private final Types typeUtils;
 
-  public MultiDataSourceRepositoryGenerator(Messager messager, Types typeUtils) {
+  private final MultiDataSourceCommonStringUtils multiDataSourceCommonStringUtils;
+
+  private final MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils;
+
+  public MultiDataSourceRepositoryGenerator(
+      Messager messager,
+      Types typeUtils,
+      MultiDataSourceCommonStringUtils multiDataSourceCommonStringUtils,
+      MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils
+  ) {
     this.messager = messager;
     this.typeUtils = typeUtils;
+    this.multiDataSourceCommonStringUtils = multiDataSourceCommonStringUtils;
+    this.multiDataSourceGeneratorUtils = multiDataSourceGeneratorUtils;
   }
 
   /**
@@ -68,7 +79,7 @@ public class MultiDataSourceRepositoryGenerator {
       String dataSourceName
   ) {
     // Generate the class/interface definition
-    final String generatedTypename = MultiDataSourceCommonStringUtils.toPascalCase(dataSourceName)
+    final String generatedTypename = multiDataSourceCommonStringUtils.toPascalCase(dataSourceName)
         + typeElement.getSimpleName().toString();
     final TypeSpec.Builder builder;
     switch (typeElement.getKind()) {
@@ -110,7 +121,7 @@ public class MultiDataSourceRepositoryGenerator {
         .collect(Collectors.toList());
 
     // Create the bean name constant
-    final FieldSpec repositoryBeanNameFieldSpec = MultiDataSourceGeneratorUtils
+    final FieldSpec repositoryBeanNameFieldSpec = multiDataSourceGeneratorUtils
         .createConstantStringFieldSpec(REPOSITORY_BEAN_NAME, generatedTypename);
 
     // Add the Repository annotation

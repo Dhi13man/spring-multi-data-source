@@ -6,7 +6,6 @@ import io.github.dhi13man.spring.datasource.generated.repositories.replica_2.Rep
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.platform.commons.util.ReflectionUtils;
@@ -14,11 +13,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;
 
 class MultiDataSourceRepositoryGeneratorTest {
-
-  private final Set<Class<? extends JpaRepository<?, Long>>> generatedRepositoryClasses = Set.of(
-      ReadReplicaMockConfigTestRepository.class,
-      Replica2MockRepositoryTestRepository.class
-  );
 
   @Test
   void generateRepositoryTypeElementWithAnnotatedMethods() {
@@ -78,6 +72,7 @@ class MultiDataSourceRepositoryGeneratorTest {
     Assertions.assertTrue(findAllReadReplicaMockConfigTestRepository.isPresent());
     Assertions.assertTrue(findAllReplica2MockConfigTestRepository.isPresent());
   }
+
 
   public interface MockRepositoryTestRepository extends JpaRepository<String, Long> {
 
