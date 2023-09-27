@@ -164,7 +164,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
 
     // Create primary data source configuration class
     final PackageElement elementPackage = elementUtils.getPackageOf(annotatedElement);
-    createDataSourceConfigurationClass(elementPackage, annotation, primaryDataSourceConfig);
+    createDataSourceConfigurationClass(primaryDataSourceConfig, annotation, elementPackage);
     secondaryDataSourceConfigMap.remove(primaryDataSourceConfig.dataSourceName());
 
     // Get secondary data source to target repository method elements map
@@ -174,7 +174,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     secondaryDataSourceConfigMap.keySet().stream()
         .filter(dataSource -> !dataSourceToTargetRepositoryMethodMap.containsKey(dataSource))
         .map(secondaryDataSourceConfigMap::get)
-        .forEach(config -> createDataSourceConfigurationClass(elementPackage, annotation, config));
+        .forEach(config -> createDataSourceConfigurationClass(config, annotation, elementPackage));
     if (dataSourceToTargetRepositoryMethodMap.isEmpty()) {
       messager.printMessage(
           Kind.NOTE,
@@ -199,9 +199,9 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
           .map(this::getJpaRepositoryEntityPackage)
           .toArray(String[]::new);
       createDataSourceConfigurationClass(
-          elementPackage,
-          annotation,
           secondaryDataSourceConfigMap.get(dataSourceName),
+          annotation,
+          elementPackage,
           dataSourceEntityPackages
       );
 
@@ -253,7 +253,6 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   /**
    * Get the {@link EnableMultiDataSourceConfig} annotation and the element on which it is
    * declared.
-   * <p>
    *
    * @param roundEnv environment for information about the current and prior round
    * @return the {@link EnableMultiDataSourceConfig} annotation and the element on which it is
@@ -323,20 +322,24 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   }
 
   /**
-   * Creates a data source config class for the {@link EnableMultiDataSourceConfig} annotation and
-   * the element on which it is declared.
+   * Creates a data source config class for the {@link DataSourceConfig} provided.
    *
-   * @param elementPackage   the package of the element on which the annotation is declared (usually
-   *                         the package of the class)
-   * @param annotation       the {@link EnableMultiDataSourceConfig} annotation
-   * @param dataSourceConfig the {@link DataSourceConfig} for which the config class is to be
+   * @param dataSourceConfig    the {@link DataSourceConfig} for which the config class is to be
+   *                            generated
+   * @param annotation          the {@link EnableMultiDataSourceConfig} annotation from which the
+   *                            global level config is to be read
+   * @param elementPackage      the package of the element on which the annotation is declared (used
+   *                            for defaulting the package of the generated config class)
+   * @param extraEntityPackages extra entity packages to be scanned for entities, specifically for
+   *                            this data source. This will be used in addition to the entity
+   *                            packages provided in the global annotation
    * @throws IllegalArgumentException if no entity packages or repository packages are provided in
    *                                  the annotation
    */
   private void createDataSourceConfigurationClass(
-      PackageElement elementPackage,
-      EnableMultiDataSourceConfig annotation,
       DataSourceConfig dataSourceConfig,
+      EnableMultiDataSourceConfig annotation,
+      PackageElement elementPackage,
       String... extraEntityPackages
   ) {
     final String dataSourceName = dataSourceConfig.dataSourceName();
