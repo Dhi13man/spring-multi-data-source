@@ -517,7 +517,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       JavaFile.builder(targetPackage, typeSpec).build().writeTo(filer);
     } catch (IOException e) {
       messager.printMessage(Kind.ERROR, "Error while writing the class: " + e);
-      throw new RuntimeException(e);
+      throw new IllegalStateException("Error while writing the class: " + e);
     }
   }
 
