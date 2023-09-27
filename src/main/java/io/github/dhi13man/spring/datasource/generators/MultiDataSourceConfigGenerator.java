@@ -159,45 +159,44 @@ public class MultiDataSourceConfigGenerator {
     }
 
     // Create the config class bean creation methods while adding the primary annotation to the
-    final AnnotationSpec primaryAnnotation = AnnotationSpec.builder(Primary.class).build();
     // DataSourceProperties bean
-    final MethodSpec.Builder dataSourcePropertiesMethod = createDataSourcePropertiesBeanMethod(
-        dataSourcePropertiesPath,
-        dataSourcePropertiesBeanNameField
+    final MethodSpec dataSourcePropertiesMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        createDataSourcePropertiesBeanMethod(
+            dataSourcePropertiesPath,
+            dataSourcePropertiesBeanNameField
+        ),
+        isMasterConfig
     );
-    if (isMasterConfig) {
-      dataSourcePropertiesMethod.addAnnotation(primaryAnnotation);
-    }
 
     // DataSource bean
-    final MethodSpec.Builder dataSourceMethod = createDataSourceBeanMethod(
-        dataSourceConfig.dataSourceClassPropertiesPath(),
-        dataSourceBeanNameField,
-        dataSourcePropertiesBeanNameField
+    final MethodSpec dataSourceMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        createDataSourceBeanMethod(
+            dataSourceConfig.dataSourceClassPropertiesPath(),
+            dataSourceBeanNameField,
+            dataSourcePropertiesBeanNameField
+        ),
+        isMasterConfig
     );
-    if (isMasterConfig) {
-      dataSourceMethod.addAnnotation(primaryAnnotation);
-    }
 
     // EntityManagerFactory bean
-    final MethodSpec.Builder entityManagerFactoryMethod = createEntityManagerFactoryBeanMethod(
-        dataSourceConfig.hibernateBeanContainerPropertyPath(),
-        dataSourceEntityPackageField,
-        entityManagerFactoryBeanNameField,
-        dataSourceBeanNameField
+    final MethodSpec entityManagerFactoryMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        createEntityManagerFactoryBeanMethod(
+            dataSourceConfig.hibernateBeanContainerPropertyPath(),
+            dataSourceEntityPackageField,
+            entityManagerFactoryBeanNameField,
+            dataSourceBeanNameField
+        ),
+        isMasterConfig
     );
-    if (isMasterConfig) {
-      entityManagerFactoryMethod.addAnnotation(primaryAnnotation);
-    }
 
     // TransactionManager bean
-    final MethodSpec.Builder transactionManagerMethod = createTransactionManagerBeanMethod(
-        transactionManagerBeanNameField,
-        entityManagerFactoryBeanNameField
+    final MethodSpec transactionManagerMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        createTransactionManagerBeanMethod(
+            transactionManagerBeanNameField,
+            entityManagerFactoryBeanNameField
+        ),
+        isMasterConfig
     );
-    if (isMasterConfig) {
-      transactionManagerMethod.addAnnotation(primaryAnnotation);
-    }
 
     // Create the config class
     return TypeSpec.classBuilder(dataSourceConfigClassName)
@@ -210,11 +209,33 @@ public class MultiDataSourceConfigGenerator {
         .addField(entityManagerFactoryBeanNameField)
         .addField(transactionManagerBeanNameField)
         .addField(dataSourceEntityPackageField)
-        .addMethod(dataSourcePropertiesMethod.build())
-        .addMethod(dataSourceMethod.build())
-        .addMethod(entityManagerFactoryMethod.build())
-        .addMethod(transactionManagerMethod.build())
+        .addMethod(dataSourcePropertiesMethod)
+        .addMethod(dataSourceMethod)
+        .addMethod(entityManagerFactoryMethod)
+        .addMethod(transactionManagerMethod)
         .build();
+  }
+
+  /**
+   * Takes a {@link java.util.function.Supplier} supplying a {@link MethodSpec.Builder} and adds the
+   * {@link Primary} annotation to the {@link MethodSpec.Builder} if the data source config is for
+   * the primary data source.
+   *
+   * @param methodSpecBuilder the {@link MethodSpec.Builder} to add the {@link Primary} annotation
+   *                          to if eligible
+   * @param isMasterConfig    whether the data source config is for the primary data source
+   * @return the {@link MethodSpec} built with the {@link Primary} annotation added if eligible
+   */
+  private MethodSpec addPrimaryAnnotationIfPrimaryConfigAndBuild(
+      MethodSpec.Builder methodSpecBuilder,
+      boolean isMasterConfig
+  ) {
+    final AnnotationSpec primaryAnnotation = AnnotationSpec.builder(Primary.class).build();
+    if (isMasterConfig) {
+      methodSpecBuilder.addAnnotation(primaryAnnotation);
+    }
+
+    return methodSpecBuilder.build();
   }
 
   /**
