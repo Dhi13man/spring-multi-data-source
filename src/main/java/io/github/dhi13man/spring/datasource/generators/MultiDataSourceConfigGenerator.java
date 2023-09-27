@@ -67,18 +67,20 @@ public class MultiDataSourceConfigGenerator {
    * manager factory and transaction manager and provide the proper constants for the bean names, to
    * conveniently auto-wire them where needed.
    *
-   * @param dataSourceConfig             the {@link DataSourceConfig} for which the configuration
-   *                                     class is being generated
-   * @param dataSourceName               the name of the data source for which the configuration
-   *                                     class is being generated
-   * @param dataSourceConfigClassName    the name of the data source configuration class being
-   *                                     generated
-   * @param dataSourcePropertiesPath     the path of where the properties of the data source are
-   *                                     located in application.properties
-   * @param dataSourceRepositoryPackages the packages where the repositories associated with the
-   *                                     data source are located
-   * @param dataSourceEntityPackages     the exact packages where the entities associated with the
-   *                                     data source are located
+   * @param dataSourceConfig                 the {@link DataSourceConfig} for which the
+   *                                         configuration class is being generated
+   * @param dataSourceName                   the name of the data source for which the configuration
+   *                                         class is being generated
+   * @param dataSourceConfigClassName        the name of the data source configuration class being
+   *                                         generated
+   * @param dataSourcePropertiesPath         the path of where the properties of the data source are
+   *                                         located in application.properties
+   * @param dataSourceRepositoryPackages     the packages where the repositories associated with the
+   *                                         data source are located
+   * @param dataSourceEntityPackages         the exact packages where the entities associated with
+   *                                         the data source are located
+   * @param generatedRepositoryPackagePrefix the prefix of the package where the generated copies of
+   *                                         the repositories will be placed
    * @return the {@link TypeSpec} for a data source Spring Configuration class
    */
   public TypeSpec generateMultiDataSourceConfigTypeElement(

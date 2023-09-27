@@ -82,7 +82,7 @@ public @interface EnableMultiDataSourceConfig {
   @interface DataSourceConfig {
 
     /**
-     * The name of the data source.
+     * The name of the data source which this config is for.
      * <p>
      * 1. This will be used to generate the data source beans
      * <p>
@@ -92,6 +92,8 @@ public @interface EnableMultiDataSourceConfig {
      * <p>
      * 4. The kebab-case version of this will be used to name the property paths from which the data
      * source properties will be read
+     *
+     * @return the name of the data source.
      */
     String dataSourceName() default "";
 
