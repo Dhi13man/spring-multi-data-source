@@ -66,9 +66,12 @@ for configuring multi-data source configurations for a service. Let's break down
       scanned to find the entities related to the data sources.
     - `repositoryPackages`: An array of packages to scan for repositories. These packages are
       scanned to find the repositories related to the data sources.
-    - `datasourcePropertiesPrefix`: The prefix of the master data source properties in the
-      application properties file.
-    - `generatedConfigPackage`: The package where the generated master data source config will
+    - `datasourcePropertiesPrefix`: The prefix of the data source properties in the
+      application properties file. The properties for each data source will be placed under this
+      prefix followed by the kebab case of the data source name. Eg. When set as `spring.datasource`
+      for master and readReplica data sources, the properties will be placed under
+      `spring.datasource.master` and `spring.datasource.read-replica` respectively.
+    - `generatedConfigPackage`: The package where the generated data source configs will
       be placed. The generated config class with relevant beans will follow a specific naming
       format. If this is not specified, the generated config will be placed in the same package as
       the class where this annotation is applied, followed by `.config`.

@@ -36,14 +36,14 @@ public @interface EnableMultiDataSourceConfig {
   String[] repositoryPackages() default {};
 
   /**
-   * The prefix of the master data source properties in the application properties file.
+   * The prefix of the properties for each of the data sources in the application properties file.
    *
-   * @return the prefix of the master data source properties in the application properties file.
+   * @return the prefix of the data source properties in the application properties file.
    */
   String datasourcePropertiesPrefix() default "spring.datasource";
 
   /**
-   * The package where the generated data source config will be placed.
+   * The package where the generated data source configs will be placed.
    * <p>
    * If this is not provided, the generated config will be placed in the same package as the class
    * annotated with @EnableMultiDataSourceConfig followed by .config
@@ -53,7 +53,7 @@ public @interface EnableMultiDataSourceConfig {
    * <p>
    * {generatedConfigPackage}.{PascalCaseDataSourceName}DataSourceConfig
    *
-   * @return the package where the generated master data source config will be placed.
+   * @return the package where the generated data source configs will be placed.
    */
   String generatedConfigPackage() default "";
 

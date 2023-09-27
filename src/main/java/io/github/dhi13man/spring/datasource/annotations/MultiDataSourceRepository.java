@@ -21,16 +21,11 @@ public @interface MultiDataSourceRepository {
   /**
    * Alias for dataSourceName, the name of the data source to use for the repository.
    * <p>
-   * 1. This will be used to generate the master beans
-   * <p>
-   * 2. The PascalCase version of this will be used to name the generated Classes
-   * <p>
-   * 3. The camelCase version of this will be used to name the generated packages
-   * <p>
-   * 4. The kebab-case version of this will be used to name the property paths from which the data
-   * source properties will be read
+   * To use a data source other than the primary, it must have been configured in the
+   * {@link EnableMultiDataSourceConfig#dataSourceConfigs()} annotations.
    *
    * @return the data source to use for the repository.
+   * @see EnableMultiDataSourceConfig.DataSourceConfig#dataSourceName()
    */
   @AliasFor("dataSourceName")
   String value() default "replica";

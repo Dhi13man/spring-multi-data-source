@@ -135,7 +135,7 @@ public class MultiDataSourceConfigGenerator {
             transactionManagerBeanNameField
         );
     final boolean isMasterConfig = dataSourceConfig.isPrimary();
-    // Exclude the other data source repositories from the master data source config
+    // Exclude the other data source repositories from the primary data source config
     if (isMasterConfig) {
       enableJpaRepositoriesAnnotationBuilder.addMember(
           "excludeFilters",
@@ -152,7 +152,6 @@ public class MultiDataSourceConfigGenerator {
     }
 
     // Create the config class bean creation methods while adding the primary annotation to the
-    // master data source beans
     final AnnotationSpec primaryAnnotation = AnnotationSpec.builder(Primary.class).build();
     // DataSourceProperties bean
     final MethodSpec.Builder dataSourcePropertiesMethod = createDataSourcePropertiesBeanMethod(

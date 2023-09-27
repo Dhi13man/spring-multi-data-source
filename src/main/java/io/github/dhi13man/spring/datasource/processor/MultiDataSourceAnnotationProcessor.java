@@ -362,7 +362,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     }
 
     // Create the data source config class
-    final TypeSpec masterConfigTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
+    final TypeSpec configurationTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
         dataSourceConfig,
         dataSourceName,
         dataSourceConfigClassName,
@@ -375,7 +375,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     // Write the data source config class to the relevant package
     final String generatedConfigPackage = StringUtils.hasText(configPackage)
         ? configPackage : elementPackage + CONFIG_PACKAGE_SUFFIX;
-    writeTypeSpecToPackage(generatedConfigPackage, masterConfigTypeSpec);
+    writeTypeSpecToPackage(generatedConfigPackage, configurationTypeSpec);
   }
 
   /**
@@ -436,7 +436,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         .collect(Collectors.toSet());
     if (!dataSourcesWithoutConfig.isEmpty()) {
       final String errorMessage = "No config found for data sources: " + dataSourcesWithoutConfig
-          + ". Please provide a @EnableMultiDataSourceConfig annotation for each data source.";
+          + ". Please provide a @DataSourceConfig for each data source in the"
+          + " @EnableMultiDataSourceConfig annotation.";
       messager.printMessage(Kind.ERROR, errorMessage);
       throw new IllegalArgumentException(errorMessage);
     }
