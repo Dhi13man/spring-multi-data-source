@@ -18,7 +18,7 @@ public @interface EnableMultiDataSourceConfig {
    * This must be an exact package name, and not a prefix as custom entity managers can not
    * recursively scan entities inside nested packages.
    * <p>
-   * If @MultiDataSourceRepository is used on any repository, the package of the entity that the
+   * If {@link TargetDataSource} is used on any repository, the package of the entity that the
    * repository is associated with will also be scanned for entities.
    *
    * @return the array of exact packages to scan for entities.
@@ -73,6 +73,13 @@ public @interface EnableMultiDataSourceConfig {
    */
   String generatedRepositoryPackagePrefix() default "";
 
+  /**
+   * The array of {@link DataSourceConfig} annotations which contain the configuration for each data
+   * source.
+   *
+   * @return the array of {@link DataSourceConfig} annotations.
+   * @see DataSourceConfig
+   */
   DataSourceConfig[] dataSourceConfigs() default {
       @DataSourceConfig(dataSourceName = "master", isPrimary = true)
   };

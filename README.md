@@ -29,7 +29,7 @@ tied down to this library in the future.
     - [Introduction](#introduction)
     - [Annotations Provided](#annotations-provided)
         - [@EnableMultiDataSourceConfig](#enablemultidatasourceconfig)
-        - [@MultiDataSourceRepository](#multidatasourcerepository)
+        - [@TargetDataSource](#targetdatasource)
     - [Usage](#usage)
     - [Building from Source (Maven)](#building-from-source-maven)
     - [Contributing](#contributing)
@@ -103,7 +103,7 @@ for configuring multi-data source configurations for a service. Let's break down
       the spring bean container to ensure that the hibernate beans like attribute converters are
       managed by spring.
 
-### @MultiDataSourceRepository
+### @TargetDataSource
 
 - This annotation is used to create copies of repositories in relevant packages and
   autoconfigure them to use the relevant data sources.
@@ -154,19 +154,19 @@ intended to be used for generating code for configuring data sources during the 
    }
    ```
 
-3. Add the `@MultiDataSourceRepository` annotation to the repository methods that need to be
+3. Add the `@TargetDataSource` annotation to the repository methods that need to be
    configured for a specific data source, and specify the data source name.
 
     ```java
     @Repository
     public interface ServiceRepository extends JpaRepository<ServiceEntity, Long> {
     
-       @MultiDataSourceRepository("read-replica")
+       @TargetDataSource("read-replica")
        ServiceEntity findByCustomIdAndDate(String id, Date date);
     
        // To override the default JpaRepository methods in the generated repository
        // All non-overriden methods will throw an UnsupportedOperationException.
-       @MultiDataSourceRepository("read-replica")
+       @TargetDataSource("read-replica")
        @Override
        ServiceEntity getById(Long id);
     }

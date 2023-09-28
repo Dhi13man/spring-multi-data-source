@@ -12,8 +12,8 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig.DataSourceConfig;
-import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
-import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetDataSources;
 import io.github.dhi13man.spring.datasource.dto.EnableConfigAnnotationAndElementHolder;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
@@ -47,8 +47,7 @@ import org.springframework.util.StringUtils;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
- * {@link MultiDataSourceRepository} and create copies of the repositories in the relevant
- * packages.
+ * {@link TargetDataSource} and create copies of the repositories in the relevant packages.
  */
 @AutoService(Processor.class)
 public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
@@ -146,8 +145,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   /**
    * {@inheritDoc}
    * <p>
-   * Performs the following tasks for each {@link MultiDataSourceRepository} annotated repository
-   * method:
+   * Performs the following tasks for each {@link TargetDataSource} annotated repository method:
    * <p>
    * 1. Aggregates the list of data sources to be used throughout the system
    * <p>
@@ -189,7 +187,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     // Get secondary data source to target repository method elements map
     final Map<String, Set<ExecutableElement>> dataSourceToTargetRepositoryMethodMap =
         createDataSourceToTargetRepositoryMethodMap(roundEnv, secondaryDataSourceConfigMap);
-    // Generate configs for those data sources that do not have @MultiDataSourceRepository
+    // Generate configs for those data sources that do not have @TargetDataSource
     secondaryDataSourceConfigMap.keySet().stream()
         .filter(dataSource -> !dataSourceToTargetRepositoryMethodMap.containsKey(dataSource))
         .map(secondaryDataSourceConfigMap::get)
@@ -260,7 +258,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   public Set<String> getSupportedAnnotationTypes() {
     return Set.of(
         EnableMultiDataSourceConfig.class.getCanonicalName(),
-        MultiDataSourceRepository.class.getCanonicalName()
+        TargetDataSource.class.getCanonicalName()
     );
   }
 
@@ -402,11 +400,11 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
 
   /**
    * Creates a map of the data source name to the set of ExecutableElements that are annotated with
-   * {@link MultiDataSourceRepository} for that data source.
+   * {@link TargetDataSource} for that data source.
    * <p>
-   * Targets all Classes annotated with {@link MultiDataSourceRepository} or its container
-   * annotation. Return a map grouped by the data source name to the set of ExecutableElements that
-   * are annotated with {@link MultiDataSourceRepository} for that data source.
+   * Targets all Classes annotated with {@link TargetDataSource} or its container annotation. Return
+   * a map grouped by the data source name to the set of ExecutableElements that are annotated with
+   * {@link TargetDataSource} for that data source.
    *
    * @param roundEnv            environment for information about the current and prior round
    * @param dataSourceConfigMap map of the data source name to the {@link DataSourceConfig}
@@ -417,42 +415,42 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       RoundEnvironment roundEnv,
       Map<String, DataSourceConfig> dataSourceConfigMap
   ) {
-    // Deal with individual @MultiDataSourceRepository annotations
-    final Map<String, Set<ExecutableElement>> multiDataSourceRepositoryElementMap = roundEnv
-        .getElementsAnnotatedWith(MultiDataSourceRepository.class)
+    // Deal with individual @TargetDataSource annotations
+    final Map<String, Set<ExecutableElement>> targetDataSourceAnnotatedMethodMap = roundEnv
+        .getElementsAnnotatedWith(TargetDataSource.class)
         .stream()
         .filter(element -> element instanceof ExecutableElement)
         .map(ExecutableElement.class::cast)
         .collect(
             Collectors.groupingBy(
-                x -> x.getAnnotation(MultiDataSourceRepository.class).value(),
+                x -> x.getAnnotation(TargetDataSource.class).value(),
                 Collectors.toSet()
             )
         );
 
-    // Deal with @MultiDataSourceRepositories container annotations
+    // Deal with @TargetDataSources container annotations
     final Set<ExecutableElement> annotatedElements = roundEnv
-        .getElementsAnnotatedWith(MultiDataSourceRepositories.class)
+        .getElementsAnnotatedWith(TargetDataSources.class)
         .stream()
         .filter(element -> element instanceof ExecutableElement)
         .map(ExecutableElement.class::cast)
         .collect(Collectors.toSet());
     for (final ExecutableElement element : annotatedElements) {
-      final MultiDataSourceRepositories repositoriesAnnotation = element
-          .getAnnotation(MultiDataSourceRepositories.class);
+      final TargetDataSources repositoriesAnnotation = element
+          .getAnnotation(TargetDataSources.class);
       final List<String> dataSourcesInvolved = Arrays.stream(repositoriesAnnotation.value())
-          .map(MultiDataSourceRepository::value)
+          .map(TargetDataSource::value)
           .collect(Collectors.toList());
       for (final String dataSourceName : dataSourcesInvolved) {
-        final Set<ExecutableElement> executableElements = multiDataSourceRepositoryElementMap
+        final Set<ExecutableElement> executableElements = targetDataSourceAnnotatedMethodMap
             .getOrDefault(dataSourceName, new HashSet<>());
         executableElements.add(element);
-        multiDataSourceRepositoryElementMap.put(dataSourceName, executableElements);
+        targetDataSourceAnnotatedMethodMap.put(dataSourceName, executableElements);
       }
     }
 
     // Validate that all the data sources involved have a config
-    final Set<String> dataSourcesWithoutConfig = multiDataSourceRepositoryElementMap.keySet()
+    final Set<String> dataSourcesWithoutConfig = targetDataSourceAnnotatedMethodMap.keySet()
         .stream()
         .filter(dataSourceName -> !dataSourceConfigMap.containsKey(dataSourceName))
         .collect(Collectors.toSet());
@@ -463,17 +461,17 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       messager.printMessage(Kind.ERROR, errorMessage);
       throw new IllegalArgumentException(errorMessage);
     }
-    return multiDataSourceRepositoryElementMap;
+    return targetDataSourceAnnotatedMethodMap;
   }
 
   /**
    * Creates a map of the {@link TypeElement} to the set of {@link ExecutableElement}s that are
-   * annotated with {@link MultiDataSourceRepository}.
+   * annotated with {@link TargetDataSource}.
    *
    * @param executableElements set of {@link ExecutableElement}s that are annotated with
-   *                           {@link MultiDataSourceRepository}
+   *                           {@link TargetDataSource}
    * @return map of the {@link TypeElement} to the set of {@link ExecutableElement}s that are
-   * annotated with {@link MultiDataSourceRepository}
+   * annotated with {@link TargetDataSource}
    */
   private Map<TypeElement, Set<ExecutableElement>> createTypeElementToExecutableElementsMap(
       Set<ExecutableElement> executableElements

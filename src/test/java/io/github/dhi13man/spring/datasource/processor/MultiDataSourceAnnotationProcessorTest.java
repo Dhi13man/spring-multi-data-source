@@ -3,7 +3,7 @@ package io.github.dhi13man.spring.datasource.processor;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig.DataSourceConfig;
-import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils;
@@ -295,7 +295,7 @@ class MultiDataSourceAnnotationProcessorTest {
     processor.init(mockProcessingEnvironment);
     final Set<String> expectedAnnotationTypes = Set.of(
         EnableMultiDataSourceConfig.class.getCanonicalName(),
-        MultiDataSourceRepository.class.getCanonicalName()
+        TargetDataSource.class.getCanonicalName()
     );
 
     // Act

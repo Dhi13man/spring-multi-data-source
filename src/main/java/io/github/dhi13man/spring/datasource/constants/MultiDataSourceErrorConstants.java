@@ -23,7 +23,7 @@ public final class MultiDataSourceErrorConstants {
       + " the packages (or a parent package) that hold your repositories.";
 
   public static final String NO_REPOSITORY_METHOD_ANNOTATED_WITH_MULTI_DATA_SOURCE_REPOSITORY =
-      "No repository method is annotated with @MultiDataSourceRepository. Please annotate at least"
+      "No repository method is annotated with @TargetDataSource. Please annotate at least"
           + " one repository method with this annotation if you are using"
           + " @EnableMultiDataSourceConfig and want to segregate your repositories by data source.";
 

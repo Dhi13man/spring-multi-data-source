@@ -15,8 +15,8 @@ import org.springframework.core.annotation.AliasFor;
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.SOURCE)
-@Repeatable(MultiDataSourceRepositories.class)
-public @interface MultiDataSourceRepository {
+@Repeatable(TargetDataSources.class)
+public @interface TargetDataSource {
 
   /**
    * Alias for dataSourceName, the name of the data source to use for the repository.

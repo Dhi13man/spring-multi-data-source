@@ -7,7 +7,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig.DataSourceConfig;
-import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
 import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import javax.lang.model.element.Modifier;
@@ -32,8 +32,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
- * {@link MultiDataSourceRepository} and create copies of the repositories in the relevant
- * packages.
+ * {@link TargetDataSource} and create copies of the repositories in the relevant packages.
  */
 public class MultiDataSourceConfigGenerator {
 
