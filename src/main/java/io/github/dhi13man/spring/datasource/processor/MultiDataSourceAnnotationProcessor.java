@@ -363,7 +363,12 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     final String dataSourceConfigClassName = getDataSourceConfigClassName(dataSourceName);
     final String dataSourceConfigPropertiesPath = annotation.datasourcePropertiesPrefix()
         + "." + commonStringUtils.toKebabCase(dataSourceName);
-    final String[] repositoryPackages = annotation.repositoryPackages();
+    final String[] repositoryPackages = dataSourceConfig.isPrimary()
+        ? annotation.repositoryPackages()
+        : new String[]{
+            annotation.generatedRepositoryPackagePrefix() + "."
+                + commonStringUtils.toSnakeCase(dataSourceName)
+        };
     final Set<String> entityPackages = new HashSet<>(Set.of(annotation.exactEntityPackages()));
     entityPackages.addAll(List.of(extraEntityPackages));
     final String configPackage = annotation.generatedConfigPackage();
