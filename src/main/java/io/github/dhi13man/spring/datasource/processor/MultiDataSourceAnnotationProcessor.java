@@ -226,8 +226,10 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       final String repositoryPackage = annotation.generatedRepositoryPackagePrefix();
       final String generatedRepositoryPackagePrefix = StringUtils.hasText(repositoryPackage)
           ? repositoryPackage : elementPackage + REPOSITORIES_PACKAGE_SUFFIX;
-      final String repositoryDataSourceSubPackage = generatedRepositoryPackagePrefix + "."
-          + commonStringUtils.toSnakeCase(dataSourceName);
+      final String repositoryDataSourceSubPackage = generateNonPrimaryDataSourceRepositoryPackage(
+          generatedRepositoryPackagePrefix,
+          dataSourceName
+      );
 
       // Copy all the repositories to the relevant sub-package with only the annotated methods
       for (final var typeToExecutableEntry : repositoryToMethodMap.entrySet()) {
@@ -363,11 +365,15 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     final String dataSourceConfigClassName = getDataSourceConfigClassName(dataSourceName);
     final String dataSourceConfigPropertiesPath = annotation.datasourcePropertiesPrefix()
         + "." + commonStringUtils.toKebabCase(dataSourceName);
+    // For primary data source, use the provided repository packages but for secondary data sources,
+    // generate a new package name
     final String[] repositoryPackages = dataSourceConfig.isPrimary()
         ? annotation.repositoryPackages()
         : new String[]{
-            annotation.generatedRepositoryPackagePrefix() + "."
-                + commonStringUtils.toSnakeCase(dataSourceName)
+            generateNonPrimaryDataSourceRepositoryPackage(
+                annotation.generatedRepositoryPackagePrefix(),
+                dataSourceName
+            )
         };
     final Set<String> entityPackages = new HashSet<>(Set.of(annotation.exactEntityPackages()));
     entityPackages.addAll(List.of(extraEntityPackages));
@@ -541,6 +547,21 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       messager.printMessage(Kind.ERROR, "Error while writing the class: " + e);
       throw new IllegalStateException("Error while writing the class: " + e);
     }
+  }
+
+  /**
+   * Generate the package name for the non-primary data source repositories.
+   *
+   * @param generatedRepositoryPackagePrefix the generated repository package prefix
+   * @param dataSourceName                   the name of the data source to generate the repository
+   *                                         package for
+   * @return the package name for the non-primary data source repositories
+   */
+  private String generateNonPrimaryDataSourceRepositoryPackage(
+      String generatedRepositoryPackagePrefix,
+      String dataSourceName
+  ) {
+    return generatedRepositoryPackagePrefix + "." + commonStringUtils.toSnakeCase(dataSourceName);
   }
 
   /**
