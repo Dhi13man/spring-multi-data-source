@@ -8,8 +8,8 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
-import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepositories;
-import io.github.dhi13man.spring.datasource.annotations.MultiDataSourceRepository;
+import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetDataSources;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import java.util.HashSet;
@@ -32,8 +32,7 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
- * {@link MultiDataSourceRepository} and create copies of the repositories in the relevant
- * packages.
+ * {@link TargetDataSource} and create copies of the repositories in the relevant packages.
  */
 public class MultiDataSourceRepositoryGenerator {
 
@@ -43,9 +42,20 @@ public class MultiDataSourceRepositoryGenerator {
 
   private final Types typeUtils;
 
-  public MultiDataSourceRepositoryGenerator(Messager messager, Types typeUtils) {
+  private final MultiDataSourceCommonStringUtils multiDataSourceCommonStringUtils;
+
+  private final MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils;
+
+  public MultiDataSourceRepositoryGenerator(
+      Messager messager,
+      Types typeUtils,
+      MultiDataSourceCommonStringUtils multiDataSourceCommonStringUtils,
+      MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils
+  ) {
     this.messager = messager;
     this.typeUtils = typeUtils;
+    this.multiDataSourceCommonStringUtils = multiDataSourceCommonStringUtils;
+    this.multiDataSourceGeneratorUtils = multiDataSourceGeneratorUtils;
   }
 
   /**
@@ -68,7 +78,7 @@ public class MultiDataSourceRepositoryGenerator {
       String dataSourceName
   ) {
     // Generate the class/interface definition
-    final String generatedTypename = MultiDataSourceCommonStringUtils.toPascalCase(dataSourceName)
+    final String generatedTypename = multiDataSourceCommonStringUtils.toPascalCase(dataSourceName)
         + typeElement.getSimpleName().toString();
     final TypeSpec.Builder builder;
     switch (typeElement.getKind()) {
@@ -110,7 +120,7 @@ public class MultiDataSourceRepositoryGenerator {
         .collect(Collectors.toList());
 
     // Create the bean name constant
-    final FieldSpec repositoryBeanNameFieldSpec = MultiDataSourceGeneratorUtils
+    final FieldSpec repositoryBeanNameFieldSpec = multiDataSourceGeneratorUtils
         .createConstantStringFieldSpec(REPOSITORY_BEAN_NAME, generatedTypename);
 
     // Add the Repository annotation
@@ -188,7 +198,7 @@ public class MultiDataSourceRepositoryGenerator {
           .addStatement(
               "throw new $T($S)",
               UnsupportedOperationException.class,
-              "This method is disabled in the generated class!"
+              "This method is disabled for this data source!"
           )
           .build();
       overridenMethods.add(disabledSpec);
@@ -247,13 +257,13 @@ public class MultiDataSourceRepositoryGenerator {
    */
   private MethodSpec convertExecutableMethodElementToMethodSpec(ExecutableElement method) {
     // Copy all annotations other than the ones used to mark the method as a repository method
-    // (i.e. @MultiDataSourceRepositories and @MultiDataSourceRepository)
+    // (i.e. @TargetDataSources and @TargetDataSource)
     final List<AnnotationSpec> annotationsToSpec = method.getAnnotationMirrors().stream()
         .map(AnnotationSpec::get)
         .filter(
             annotationSpec -> !Set.of(
-                TypeName.get(MultiDataSourceRepositories.class),
-                TypeName.get(MultiDataSourceRepository.class)
+                TypeName.get(TargetDataSources.class),
+                TypeName.get(TargetDataSource.class)
             ).contains(annotationSpec.type)
         )
         .collect(Collectors.toList());

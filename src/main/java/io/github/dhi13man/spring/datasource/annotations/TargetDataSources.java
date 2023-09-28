@@ -13,12 +13,12 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.SOURCE)
-public @interface MultiDataSourceRepositories {
+public @interface TargetDataSources {
 
   /**
-   * The array of {@link MultiDataSourceRepository} annotations.
+   * The array of {@link TargetDataSource} annotations.
    *
-   * @return the array of {@link MultiDataSourceRepository} annotations
+   * @return the array of {@link TargetDataSource} annotations
    */
-  MultiDataSourceRepository[] value();
+  TargetDataSource[] value();
 }

@@ -3,9 +3,21 @@ package io.github.dhi13man.spring.datasource.utils;
 import com.squareup.javapoet.FieldSpec;
 import javax.lang.model.element.Modifier;
 
-public final class MultiDataSourceGeneratorUtils {
+/**
+ * Utility class for generating code for the Multi Data Source library.
+ */
+public class MultiDataSourceGeneratorUtils {
+
+  private static MultiDataSourceGeneratorUtils instance;
 
   private MultiDataSourceGeneratorUtils() {
+  }
+
+  public static MultiDataSourceGeneratorUtils getInstance() {
+    if (instance == null) {
+      instance = new MultiDataSourceGeneratorUtils();
+    }
+    return instance;
   }
 
   /**
@@ -15,7 +27,7 @@ public final class MultiDataSourceGeneratorUtils {
    * @param fieldValue the value of the field
    * @return the {@link FieldSpec} for a constant String
    */
-  public static FieldSpec createConstantStringFieldSpec(String fieldName, String... fieldValue) {
+  public FieldSpec createConstantStringFieldSpec(String fieldName, String... fieldValue) {
     // If there is only one value, create a simple constant
     if (fieldValue.length == 1) {
       return FieldSpec.builder(String.class, fieldName)

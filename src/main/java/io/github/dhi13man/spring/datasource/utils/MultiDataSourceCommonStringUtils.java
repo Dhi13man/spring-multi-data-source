@@ -1,14 +1,28 @@
 package io.github.dhi13man.spring.datasource.utils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class MultiDataSourceCommonStringUtils {
-
-  public static final String CAPITAL_LETTER_REGEX = "[A-Z]";
+/**
+ * Utility class for common string operations.
+ */
+public class MultiDataSourceCommonStringUtils {
 
   public static final String NON_ALPHA_NUMERIC_REGEX = "[^a-zA-Z0-9]";
+
+  private static MultiDataSourceCommonStringUtils instance;
+
+  private MultiDataSourceCommonStringUtils() {
+  }
+
+  public static MultiDataSourceCommonStringUtils getInstance() {
+    if (instance == null) {
+      instance = new MultiDataSourceCommonStringUtils();
+    }
+    return instance;
+  }
 
   /**
    * Convert any special character separated string to PascalCase
@@ -16,8 +30,8 @@ public final class MultiDataSourceCommonStringUtils {
    * @param input input string
    * @return PascalCase string
    */
-  public static String toPascalCase(String input) {
-    final List<String> split = splitByNonAlphaNumeric(input);
+  public String toPascalCase(String input) {
+    final List<String> split = splitByNonAlphaNumericRemoved(input);
     if (split.size() == 1) {
       return split.get(0).substring(0, 1).toUpperCase() + split.get(0).substring(1);
     }
@@ -33,10 +47,10 @@ public final class MultiDataSourceCommonStringUtils {
    * @param input input string
    * @return snake_case string
    */
-  public static String toSnakeCase(String input) {
-    final List<String> split = splitByNonAlphaNumeric(input);
+  public String toSnakeCase(String input) {
+    final List<String> split = splitByNonAlphaNumericRemoved(input);
     if (split.size() == 1) {
-      final List<String> elements = splitByCamelCase(split.get(0)).stream()
+      final List<String> elements = splitByCamelCaseNotRemoved(split.get(0)).stream()
           .map(String::toLowerCase)
           .collect(Collectors.toList());
       return String.join("_", elements);
@@ -51,10 +65,10 @@ public final class MultiDataSourceCommonStringUtils {
    * @param input input string
    * @return kebab-case string
    */
-  public static String toKebabCase(String input) {
-    final List<String> split = splitByNonAlphaNumeric(input);
+  public String toKebabCase(String input) {
+    final List<String> split = splitByNonAlphaNumericRemoved(input);
     if (split.size() == 1) {
-      final List<String> elements = splitByCamelCase(split.get(0)).stream()
+      final List<String> elements = splitByCamelCaseNotRemoved(split.get(0)).stream()
           .map(String::toLowerCase)
           .collect(Collectors.toList());
       return String.join("-", elements);
@@ -64,27 +78,38 @@ public final class MultiDataSourceCommonStringUtils {
   }
 
   /**
-   * Split by all special characters and underscore
+   * Split by all non-alphanumeric characters while preserving only the alphabets and numbers.
    *
    * @param input input string
    * @return list of strings
    */
-  private static List<String> splitByNonAlphaNumeric(String input) {
+  private List<String> splitByNonAlphaNumericRemoved(String input) {
     return Stream.of(input.split(NON_ALPHA_NUMERIC_REGEX))
         .filter(s -> !s.isEmpty())
         .collect(Collectors.toList());
   }
 
   /**
-   * Split by camel case
+   * Split by camel case while preserving all the characters.
    *
    * @param input input string
    * @return list of strings
    */
-  private static List<String> splitByCamelCase(String input) {
-    return Stream.of(input.split(CAPITAL_LETTER_REGEX))
-        .filter(s -> !s.isEmpty())
-        .collect(Collectors.toList());
+  private List<String> splitByCamelCaseNotRemoved(String input) {
+    StringBuilder currentWord = new StringBuilder();
+    final List<String> result = new ArrayList<>();
+    for (final char c : input.toCharArray()) {
+      if (Character.isUpperCase(c) && currentWord.length() > 0) {
+        result.add(currentWord.toString());
+        currentWord = new StringBuilder();
+      }
+      currentWord.append(c);
+    }
+    if (currentWord.length() > 0) {
+      result.add(currentWord.toString());
+    }
+
+    return result;
   }
 
 }
