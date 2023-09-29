@@ -13,12 +13,14 @@
 
 [!["Buy Me A Coffee"](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20an%20Ego%20boost&emoji=%F0%9F%98%B3&slug=dhi13man&button_colour=FF5F5F&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00****)](https://www.buymeacoffee.com/dhi13man)
 
+[![Medium Article](https://img.shields.io/badge/Medium-12100E?style=for-the-badge&logo=medium&logoColor=white)](https://medium.com/@dhi13man/simplify-multiple-data-source-integration-for-spring-boot-services-c465ce1dcdb6)
+
 Spring Boot has multiple limitations when it comes to using multiple data sources in a single
 service. This project aims to provide a solution to those limitations by providing custom
 annotations that can be used to generate the required Bean-providing configuration classes and
 repositories during the build process itself, which can then be used by the service.
 
-The best part is, the entirety of the generated code is clean, human-readable, and can be
+The best part is that the entirety of the generated code is clean, human-readable, and can be
 directly carried over to the relevant packages of the main code if you no longer wish to be
 tied down to this library in the future.
 
@@ -251,4 +253,4 @@ out [LICENSE](LICENSE) for more details.
 
 3. [javapoet (for generating code in Java)](https://github.com/square/javapoet)
 
-4. [Annotation Processing in Java](https://www.baeldung.com/java-annotation-processing-builder)
+4. [Annotation Processing in Java](https://www.baeldung.com/java-annotation-processing-builder) 
