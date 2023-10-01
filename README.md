@@ -53,7 +53,7 @@ The limitations of using multiple data sources in a single service in Spring are
    managers, transaction managers etc. for each data source.
 
 3. To get `EntityManagerFactoryBuilder` injected, we need to declare one of the data sources and all
-   its beans as `@Primary`. Otherwise, service won't even start up.
+   its beans as `@Primary`. Otherwise, the service won't even start up.
 
 To mitigate the above limitations, I have created two custom annotations in Java that can be used
 for configuring multi-data source configurations for a service. Let's break down each annotation:
@@ -97,7 +97,7 @@ for configuring multi-data source configurations for a service. Let's break down
 
 - It has the following attributes:
     - `dataSourceName`: The name of the data source. It is used to generate the date source
-      beans and name the generated classes, packages, and property paths for the data
+      beans and to name the generated classes, packages, and property paths for the data
       source properties.
     - `isPrimary`: Whether the data source is the primary data source. If this is set to
       `true`, the generated beans for this data source will be annotated with `@Primary`. Hence
@@ -137,7 +137,7 @@ intended to be used for generating code for configuring data sources during the 
    ```
 
 2. Add the `@EnableMultiDataSourceConfig` annotation to a configuration class in your service, and
-   specify the relevant attributes. At bare minimum the `exactEntityPackages`
+   specify the relevant attributes. At a bare minimum the `exactEntityPackages`
    and `repositoryPackages` attributes need to be specified. Ensure that you are no longer using
    `@EnableJpaRepositories` and `@EntityScan` annotations.
 
@@ -248,11 +248,12 @@ longer wish to be tied down to this library.
 
 1. Move the generated configuration classes and repositories to the relevant packages in your
    project from the `target/generated-sources/annotations` directory.
-2. Remove the `@EnableMultiDataSourceConfig` annotation from your configuration class.
-3. Remove the `@TargetDataSource` annotation from your repository methods.
-4. Remove the `spring-multi-data-source` dependency from your project pom.
+2. Remove `implements IMultiDataSourceConfig` from the generated `@Configuration` classes.
+3. Remove the `@EnableMultiDataSourceConfig` annotation from your configuration class.
+4. Remove the `@TargetDataSource` annotation from your repository methods.
+5. Remove the `spring-multi-data-source` dependency from your project pom.
 
-And thats all you have to do! You are no longer tied down to this library and have the freedom to
+And that's all you have to do! You are no longer tied down to this library and have the freedom to
 use and modify the generated code to your liking.
 
 ## Contributing
