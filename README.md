@@ -15,28 +15,32 @@
 
 [![Medium Article](https://img.shields.io/badge/Medium-12100E?style=for-the-badge&logo=medium&logoColor=white)](https://medium.com/@dhi13man/simplify-multiple-data-source-integration-for-spring-boot-services-c465ce1dcdb6)
 
-Spring Boot has multiple limitations when it comes to using multiple data sources in a single
-service. This project aims to provide a solution to those limitations by providing custom
-annotations that can be used to generate the required Bean-providing configuration classes and
-repositories during the build process itself, which can then be used by the service.
+Spring Boot has multiple limitations when using multiple data sources in a single service. This
+project aims to solve those limitations by providing custom annotations that can be used to generate
+the required Bean-providing configuration classes and repositories during the build process itself,
+which the service can then use.
 
 The best part is that the entirety of the generated code is clean, human-readable, and can be
-directly carried over to the relevant packages of the main code if you no longer wish to be
-tied down to this library in the future.
+directly carried over to the relevant packages of the main code if you no longer wish to be tied
+down to this library in the future.
 
 ## Table of Contents
 
-- [spring-multi-data-source](#spring-multi-data-source)
-    - [Table of Contents](#table-of-contents)
-    - [Introduction](#introduction)
-    - [Annotations Provided](#annotations-provided)
-        - [@EnableMultiDataSourceConfig](#enablemultidatasourceconfig)
-        - [@TargetDataSource](#targetdatasource)
-    - [Usage](#usage)
-    - [Building from Source (Maven)](#building-from-source-maven)
-    - [Contributing](#contributing)
-    - [License](#license)
-    - [Resources](#resources)
+<!-- TOC -->
+* [spring-multi-data-source](#spring-multi-data-source)
+  * [Table of Contents](#table-of-contents)
+  * [Introduction](#introduction)
+  * [Annotations Provided](#annotations-provided)
+    * [@EnableMultiDataSourceConfig](#enablemultidatasourceconfig)
+      * [@EnableMultiDataSourceConfig.DataSourceConfig](#enablemultidatasourceconfigdatasourceconfig)
+    * [@TargetDataSource](#targetdatasource)
+  * [Usage](#usage)
+  * [Building from Source (Maven)](#building-from-source-maven)
+  * [Removing Dependency on spring-multi-data-source without Losing Functionality](#removing-dependency-on-spring-multi-data-source-without-losing-functionality)
+  * [Contributing](#contributing)
+  * [License](#license)
+  * [Resources](#resources)
+<!-- TOC -->
 
 ## Introduction
 
@@ -167,7 +171,8 @@ intended to be used for generating code for configuring data sources during the 
        ServiceEntity findByCustomIdAndDate(String id, Date date);
     
        // To override the default JpaRepository methods in the generated repository
-       // All non-overriden methods will throw an UnsupportedOperationException.
+       // All base methods that have not been overridden along with this annotation will throw an 
+       // UnsupportedOperationException.
        @TargetDataSource("read-replica")
        @Override
        ServiceEntity getById(Long id);
@@ -234,6 +239,21 @@ intended to be used for generating code for configuring data sources during the 
 8. The generated code will be available in the `target/generated-sources/annotations` directory.
 9. Add that directory as a generated sources root in your IDE.
 10. Use the generated code as mentioned above.
+
+## Removing Dependency on spring-multi-data-source without Losing Functionality
+
+A big selling point of this library is that it is not a black box. The generated code is clean,
+human-readable, and can be directly carried over to the relevant packages of the main code if you no
+longer wish to be tied down to this library.
+
+1. Move the generated configuration classes and repositories to the relevant packages in your
+   project from the `target/generated-sources/annotations` directory.
+2. Remove the `@EnableMultiDataSourceConfig` annotation from your configuration class.
+3. Remove the `@TargetDataSource` annotation from your repository methods.
+4. Remove the `spring-multi-data-source` dependency from your project pom.
+
+And thats all you have to do! You are no longer tied down to this library and have the freedom to
+use and modify the generated code to your liking.
 
 ## Contributing
 
