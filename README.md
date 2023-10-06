@@ -80,12 +80,12 @@ for configuring multi-data source configurations for a service. Let's break down
     - `generatedConfigPackage`: The package where the generated data source configs will
       be placed. The generated config class with relevant beans will follow a specific naming
       format. If this is not specified, the generated config will be placed in the same package as
-      the class where this annotation is applied, followed by `.config`.
+      the class where this annotation is applied, followed by `.generated.config`.
     - `generatedRepositoryPackagePrefix`: The prefix of the package where the generated copies
       of the repositories will be placed. The generated repositories will follow a specific
       naming format. If this is not specified, the generated repositories will be placed in the
-      same package as the class where this annotation is applied, followed by `.repositories` and
-      then `.<data_source_name>`.
+      same package as the class where this annotation is applied, followed by
+      `.generated.repositories` and then `.<data_source_name>`.
     - `dataSourceConfigs`: An array of `@DataSourceConfig` annotations. Each annotation represents
       a data source and its configuration.
 

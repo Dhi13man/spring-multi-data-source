@@ -1,5 +1,17 @@
 # Releases
 
+## [0.1.2] - 6th October 2023
+
+- HOTFIX: Fix `@EnableJpaRepositories.basePackages` being empty for secondary data sources
+  when `@EnableMultiDataSourceConfig.generatedRepositoryPackagePrefix` is not set. Instead, it will
+  be set to the package of the `@EnableMultiDataSourceConfig` annotated class followed by
+  `.generated.repositories` and then the snake-cased datasource name.
+- Default `@EnableMultiDataSourceConfig.generatedConfigPackage` changed to the package of the
+  `@EnableMultiDataSourceConfig` annotated class followed by `.generated.config` instead of
+  `@EnableMultiDataSourceConfig.generatedRepositoryPackagePrefix` followed by `.config`.
+- No repositories will be scanned for data sources which do not have a `@TargetDataSource`.
+- Refactor internal logic for more readability.
+
 ## [0.1.1] - 26th September 2023
 
 ### [PR#13](https://github.com/Dhi13man/spring-multi-data-source/pull/13)

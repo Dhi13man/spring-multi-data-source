@@ -15,7 +15,8 @@ import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceCon
     dataSourceConfigs = {
         @DataSourceConfig(dataSourceName = "master", isPrimary = true),
         @DataSourceConfig(dataSourceName = "replica-2"),
-        @DataSourceConfig(dataSourceName = "read-replica")
+        @DataSourceConfig(dataSourceName = "read-replica"),
+        @DataSourceConfig(dataSourceName = "replica-no-target-data-source"),
     }
 )
 public class MultiDataSourceTestConfig {
