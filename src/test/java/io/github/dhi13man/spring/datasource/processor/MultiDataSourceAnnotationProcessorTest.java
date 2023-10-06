@@ -187,8 +187,8 @@ class MultiDataSourceAnnotationProcessorTest {
             MOCK_MASTER_DATA_SOURCE_CONFIG_CLASS_NAME,
             MOCK_DATASOURCE_PROPERTIES_PREFIX + "." + MOCK_MASTER_DATA_SOURCE_NAME,
             mockPackages,
-            mockPackages,
-            MOCK_TEST_PACKAGE
+            new String[]{MOCK_TEST_PACKAGE},
+            mockPackages
         )
     ).thenReturn(mockConfigTypeSpec);
 

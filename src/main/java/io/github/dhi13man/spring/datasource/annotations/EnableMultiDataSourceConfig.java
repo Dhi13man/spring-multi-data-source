@@ -46,7 +46,7 @@ public @interface EnableMultiDataSourceConfig {
    * The package where the generated data source configs will be placed.
    * <p>
    * If this is not provided, the generated config will be placed in the same package as the class
-   * annotated with @EnableMultiDataSourceConfig followed by .config
+   * annotated with @EnableMultiDataSourceConfig followed by .generated.config
    * <p>
    * The generated Config class with all the relevant beans will be placed in this package with the
    * following format:
@@ -61,7 +61,7 @@ public @interface EnableMultiDataSourceConfig {
    * The prefix of the package where the generated copies of the repositories will be placed.
    * <p>
    * If this is not provided, the generated repositories will be placed in the same package as the
-   * class annotated with @EnableMultiDataSourceConfig followed by .repositories and then
+   * class annotated with @EnableMultiDataSourceConfig followed by .generated.repositories and then
    * .{snake_case_data_source_name}
    * <p>
    * The generated repositories will be placed in packages with the following format:

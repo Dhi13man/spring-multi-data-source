@@ -4,6 +4,8 @@ import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
 import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.generated.config.MasterDataSourceConfig;
 import io.github.dhi13man.spring.datasource.generated.config.ReadReplicaDataSourceConfig;
+import io.github.dhi13man.spring.datasource.generated.config.Replica2DataSourceConfig;
+import io.github.dhi13man.spring.datasource.generated.config.ReplicaNoTargetDataSourceDataSourceConfig;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -34,7 +36,9 @@ class MultiDataSourceConfigGeneratorTest {
    */
   private final Set<IMultiDataSourceConfig> generatedConfigs = Set.of(
       new MasterDataSourceConfig(),
-      new ReadReplicaDataSourceConfig()
+      new ReadReplicaDataSourceConfig(),
+      new Replica2DataSourceConfig(),
+      new ReplicaNoTargetDataSourceDataSourceConfig()
   );
 
   @Test

@@ -56,9 +56,9 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
 
   private static final String JPA_REPOSITORY_INTERFACE_NAME = "JpaRepository";
 
-  private static final String CONFIG_PACKAGE_SUFFIX = ".config";
+  private static final String CONFIG_PACKAGE_SUFFIX = ".generated.config";
 
-  private static final String REPOSITORIES_PACKAGE_SUFFIX = ".repositories";
+  private static final String REPOSITORIES_PACKAGE_SUFFIX = ".generated.repositories";
 
   private Filer filer;
 
@@ -73,7 +73,6 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   private MultiDataSourceConfigGenerator configGenerator;
 
   private MultiDataSourceRepositoryGenerator repositoryGenerator;
-
 
   /**
    * Constructor for the annotation processor to be run during compile time.
@@ -180,8 +179,18 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         createDataSourceToConfigMap(dataSourceConfigs);
 
     // Create primary data source configuration class
-    final PackageElement elementPackage = elementUtils.getPackageOf(annotatedElement);
-    createDataSourceConfigurationClass(primaryDataSourceConfig, annotation, elementPackage);
+    final PackageElement annotatedElementPackage = elementUtils.getPackageOf(annotatedElement);
+    final String nonEmptyGeneratedRepositoryPackagePrefix =
+        getGeneratedRepositoryPackagePrefix(annotation, annotatedElementPackage);
+    final String nonEmptyGeneratedConfigPackage =
+        getGeneratedConfigPackage(annotation, annotatedElementPackage);
+    createDataSourceConfigurationClass(
+        primaryDataSourceConfig,
+        annotation,
+        nonEmptyGeneratedConfigPackage,
+        annotation.repositoryPackages(), // For primary data source, scan all the packages provided
+        new String[]{nonEmptyGeneratedRepositoryPackagePrefix} // Generated repos excluded from scan
+    );
     secondaryDataSourceConfigMap.remove(primaryDataSourceConfig.dataSourceName());
 
     // Get secondary data source to target repository method elements map
@@ -191,7 +200,15 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     secondaryDataSourceConfigMap.keySet().stream()
         .filter(dataSource -> !dataSourceToTargetRepositoryMethodMap.containsKey(dataSource))
         .map(secondaryDataSourceConfigMap::get)
-        .forEach(config -> createDataSourceConfigurationClass(config, annotation, elementPackage));
+        .forEach(
+            config -> createDataSourceConfigurationClass(
+                config,
+                annotation,
+                nonEmptyGeneratedConfigPackage,
+                annotation.repositoryPackages(), // All repos scanned as no @TargetDataSource
+                annotation.repositoryPackages() // All repos excluded as no @TargetDataSource
+            )
+        );
     if (dataSourceToTargetRepositoryMethodMap.isEmpty()) {
       messager.printMessage(
           Kind.NOTE,
@@ -215,20 +232,17 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       final String[] dataSourceEntityPackages = repositoryToMethodMap.keySet().stream()
           .map(this::getJpaRepositoryEntityPackage)
           .toArray(String[]::new);
+      final String repositoryDataSourceSubPackage = generateNonPrimaryDataSourceRepositoryPackage(
+          nonEmptyGeneratedRepositoryPackagePrefix,
+          dataSourceName
+      );
       createDataSourceConfigurationClass(
           secondaryDataSourceConfigMap.get(dataSourceName),
           annotation,
-          elementPackage,
+          nonEmptyGeneratedConfigPackage,
+          new String[]{repositoryDataSourceSubPackage}, // Only scan the generated package
+          new String[]{}, // No repos excluded from scan as all repos are in the generated package
           dataSourceEntityPackages
-      );
-
-      // Get the data source name and other relevant details for this data source
-      final String repositoryPackage = annotation.generatedRepositoryPackagePrefix();
-      final String generatedRepositoryPackagePrefix = StringUtils.hasText(repositoryPackage)
-          ? repositoryPackage : elementPackage + REPOSITORIES_PACKAGE_SUFFIX;
-      final String repositoryDataSourceSubPackage = generateNonPrimaryDataSourceRepositoryPackage(
-          generatedRepositoryPackagePrefix,
-          dataSourceName
       );
 
       // Copy all the repositories to the relevant sub-package with only the annotated methods
@@ -341,53 +355,85 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   }
 
   /**
+   * Get the generated repository package prefix from the annotation or the element package.
+   * <p>
+   * If the annotation has a value for the generated repository package prefix, use that. Otherwise,
+   * use the package of the element on which the annotation is declared.
+   *
+   * @param annotation     the {@link EnableMultiDataSourceConfig} annotation
+   * @param elementPackage the package of the element on which the annotation is declared
+   * @return the generated repository package prefix
+   */
+  private String getGeneratedRepositoryPackagePrefix(
+      EnableMultiDataSourceConfig annotation,
+      PackageElement elementPackage
+  ) {
+    final String repositoryPackage = annotation.generatedRepositoryPackagePrefix();
+    return StringUtils.hasText(repositoryPackage) ? repositoryPackage
+        : elementPackage + REPOSITORIES_PACKAGE_SUFFIX;
+  }
+
+  /**
+   * Get the generated config package from the annotation or the element package.
+   * <p>
+   * If the annotation has a value for the generated config package, use that. Otherwise, use the
+   * package of the element on which the annotation is declared.
+   *
+   * @param annotation     the {@link EnableMultiDataSourceConfig} annotation
+   * @param elementPackage the package of the element on which the annotation is declared
+   * @return the generated config package
+   */
+  private String getGeneratedConfigPackage(
+      EnableMultiDataSourceConfig annotation,
+      PackageElement elementPackage
+  ) {
+    final String generatedConfigPackage = annotation.generatedConfigPackage();
+    return StringUtils.hasText(generatedConfigPackage) ? generatedConfigPackage
+        : elementPackage + CONFIG_PACKAGE_SUFFIX;
+  }
+
+  /**
    * Creates a data source config class for the {@link DataSourceConfig} provided.
    *
-   * @param dataSourceConfig    the {@link DataSourceConfig} for which the config class is to be
-   *                            generated
-   * @param annotation          the {@link EnableMultiDataSourceConfig} annotation from which the
-   *                            global level config is to be read
-   * @param elementPackage      the package of the element on which the annotation is declared (used
-   *                            for defaulting the package of the generated config class)
-   * @param extraEntityPackages extra entity packages to be scanned for entities, specifically for
-   *                            this data source. This will be used in addition to the entity
-   *                            packages provided in the global annotation
+   * @param dataSourceConfig                    the {@link DataSourceConfig} for which the config
+   *                                            class is to be generated
+   * @param annotation                          the {@link EnableMultiDataSourceConfig} annotation
+   *                                            from which the global level config is to be read
+   * @param generatedConfigPackage              the package where the generated data source
+   *                                            configuration will be placed
+   * @param repositoryPackagesToIncludeInScan   the repository packages to be scanned for
+   *                                            repositories, specifically for this data source
+   * @param repositoryPackagesToExcludeFromScan the repository packages to be excluded from scanning
+   *                                            for repositories, specifically for this data
+   *                                            source.
+   * @param extraEntityPackagesToScan           extra entity packages to be scanned for entities,
+   *                                            specifically for this data source. This will be used
+   *                                            in addition to the entity packages provided in the
+   *                                            global annotation
    * @throws IllegalArgumentException if no entity packages or repository packages are provided in
    *                                  the annotation
    */
   private void createDataSourceConfigurationClass(
       DataSourceConfig dataSourceConfig,
       EnableMultiDataSourceConfig annotation,
-      PackageElement elementPackage,
-      String... extraEntityPackages
+      String generatedConfigPackage,
+      String[] repositoryPackagesToIncludeInScan,
+      String[] repositoryPackagesToExcludeFromScan,
+      String... extraEntityPackagesToScan
   ) {
     final String dataSourceName = dataSourceConfig.dataSourceName();
     final String dataSourceConfigClassName = getDataSourceConfigClassName(dataSourceName);
     final String dataSourceConfigPropertiesPath = annotation.datasourcePropertiesPrefix()
         + "." + commonStringUtils.toKebabCase(dataSourceName);
-    // For primary data source, use the provided repository packages but for secondary data sources,
-    // generate a new package name
-    final String[] repositoryPackages = dataSourceConfig.isPrimary()
-        ? annotation.repositoryPackages()
-        : new String[]{
-            generateNonPrimaryDataSourceRepositoryPackage(
-                annotation.generatedRepositoryPackagePrefix(),
-                dataSourceName
-            )
-        };
     final Set<String> entityPackages = new HashSet<>(Set.of(annotation.exactEntityPackages()));
-    entityPackages.addAll(List.of(extraEntityPackages));
-    final String configPackage = annotation.generatedConfigPackage();
-    final String repositoryPackage = annotation.generatedRepositoryPackagePrefix();
-    final String generatedRepositoryPackagePrefix = StringUtils.hasText(repositoryPackage)
-        ? repositoryPackage : elementPackage + REPOSITORIES_PACKAGE_SUFFIX;
+    entityPackages.addAll(List.of(extraEntityPackagesToScan));
 
     // Validate the provided data source values
     if (entityPackages.isEmpty()) {
       messager.printMessage(Kind.ERROR, NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
       throw new IllegalArgumentException(NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG);
     }
-    if (repositoryPackages.length == 0) {
+    if (repositoryPackagesToIncludeInScan.length == 0) {
       messager.printMessage(Kind.ERROR, NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG);
       throw new IllegalArgumentException(NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG);
     }
@@ -398,14 +444,12 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         dataSourceName,
         dataSourceConfigClassName,
         dataSourceConfigPropertiesPath,
-        repositoryPackages,
-        entityPackages.toArray(String[]::new),
-        generatedRepositoryPackagePrefix
+        repositoryPackagesToIncludeInScan,
+        repositoryPackagesToExcludeFromScan,
+        entityPackages.toArray(String[]::new)
     );
 
     // Write the data source config class to the relevant package
-    final String generatedConfigPackage = StringUtils.hasText(configPackage)
-        ? configPackage : elementPackage + CONFIG_PACKAGE_SUFFIX;
     writeTypeSpecToPackage(generatedConfigPackage, configurationTypeSpec);
   }
 
