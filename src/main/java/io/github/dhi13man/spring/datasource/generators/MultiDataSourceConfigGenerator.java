@@ -2,6 +2,7 @@ package io.github.dhi13man.spring.datasource.generators;
 
 
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.AnnotationSpec.Builder;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -25,6 +26,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.repository.config.BootstrapMode;
+import org.springframework.data.repository.query.QueryLookupStrategy.Key;
 import org.springframework.orm.hibernate5.SpringBeanContainer;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -123,32 +126,32 @@ public class MultiDataSourceConfigGenerator {
     );
 
     // Create the config class level annotations
-    final AnnotationSpec.Builder enableJpaRepositoriesAnnotationBuilder = AnnotationSpec
-        .builder(EnableJpaRepositories.class)
-        .addMember(
-            "basePackages",
-            "$L",
-            stringArrayToGeneratedStringArray(repositoryPackagesToInclude)
-        )
-        .addMember(
-            "entityManagerFactoryRef",
-            "$L.$N",
-            dataSourceConfigClassName,
-            entityManagerFactoryBeanNameField
-        )
-        .addMember(
-            "transactionManagerRef",
-            "$L.$N",
-            dataSourceConfigClassName,
-            transactionManagerBeanNameField
-        );
+    final AnnotationSpec.Builder enableJpaRepositoriesAnnotationBuilder =
+        getEnableJpaRepositoriesBuilderFromDataSourceConfig(dataSourceConfig)
+            .addMember(
+                "basePackages",
+                "$L",
+                stringArrayToGeneratedStringArray(repositoryPackagesToInclude)
+            )
+            .addMember(
+                "entityManagerFactoryRef",
+                "$L.$N",
+                dataSourceConfigClassName,
+                entityManagerFactoryBeanNameField
+            )
+            .addMember(
+                "transactionManagerRef",
+                "$L.$N",
+                dataSourceConfigClassName,
+                transactionManagerBeanNameField
+            );
     // Exclude the other data source repositories from the scan
     if (repositoryPackagesToExclude.length > 0) {
       enableJpaRepositoriesAnnotationBuilder.addMember(
           "excludeFilters",
           "$L",
           AnnotationSpec.builder(ComponentScan.Filter.class)
-              .addMember("type", "$T.REGEX", FilterType.class)
+              .addMember("type", "$T.$L", FilterType.class, FilterType.REGEX)
               .addMember(
                   "pattern",
                   "$L",
@@ -215,6 +218,54 @@ public class MultiDataSourceConfigGenerator {
         .addMethod(entityManagerFactoryMethod)
         .addMethod(transactionManagerMethod)
         .build();
+  }
+
+  /**
+   * Create the {@link Builder} for the {@link EnableJpaRepositories} annotation from the
+   * {@link DataSourceConfig}.
+   *
+   * @param dataSourceConfig the {@link DataSourceConfig} from which the {@link Builder} is being
+   *                         created
+   * @return the {@link Builder} for the {@link EnableJpaRepositories} annotation from the
+   * {@link DataSourceConfig}
+   */
+  private Builder getEnableJpaRepositoriesBuilderFromDataSourceConfig(
+      DataSourceConfig dataSourceConfig
+  ) {
+    return AnnotationSpec
+        .builder(EnableJpaRepositories.class)
+        .addMember(
+            "repositoryImplementationPostfix",
+            "$S",
+            dataSourceConfig.repositoryImplementationPostfix()
+        )
+        .addMember(
+            "namedQueriesLocation",
+            "$S",
+            dataSourceConfig.namedQueriesLocation()
+        )
+        .addMember(
+            "queryLookupStrategy",
+            "$T.$L",
+            Key.class,
+            dataSourceConfig.queryLookupStrategy()
+        )
+        .addMember(
+            "considerNestedRepositories",
+            "$L",
+            dataSourceConfig.considerNestedRepositories()
+        )
+        .addMember(
+            "enableDefaultTransactions",
+            "$L",
+            dataSourceConfig.enableDefaultTransactions()
+        )
+        .addMember(
+            "bootstrapMode",
+            "$T.$L",
+            BootstrapMode.class,
+            dataSourceConfig.repositoryBootstrapMode()
+        );
   }
 
   /**

@@ -4,6 +4,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.repository.config.BootstrapMode;
+import org.springframework.data.repository.query.QueryLookupStrategy;
+import org.springframework.data.repository.query.QueryLookupStrategy.Key;
 
 /**
  * Annotation to enable multi data source configuration for the service.
@@ -129,5 +133,69 @@ public @interface EnableMultiDataSourceConfig {
      * @return the prefix of the hibernate bean container properties in the application properties
      */
     String hibernateBeanContainerPropertyPath() default "hibernate.resource.beans.container";
+
+    /**
+     * Returns the postfix to be used when looking up custom repository implementations. Defaults to
+     * {@literal Impl}. So for a repository named {@code PersonRepository} the corresponding
+     * implementation class will be looked up scanning for {@code PersonRepositoryImpl}.
+     *
+     * @return the postfix to be used when looking up custom repository implementations.
+     */
+    String repositoryImplementationPostfix() default "Impl";
+
+    /**
+     * Configures the location of where to find the Spring Data named queries properties file. Will
+     * default to {@code META-INF/jpa-named-queries.properties}.
+     *
+     * @return the location of where to find the Spring Data named queries properties file.
+     */
+    String namedQueriesLocation() default "";
+
+    /**
+     * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query
+     * methods. Defaults to {@link Key#CREATE_IF_NOT_FOUND}.
+     *
+     * @return the key of the {@link QueryLookupStrategy} to be used for lookup queries for query
+     * methods.
+     */
+    Key queryLookupStrategy() default Key.CREATE_IF_NOT_FOUND;
+
+    // JPA specific configuration
+
+    /**
+     * Configures whether nested repository-interfaces (e.g. defined as inner classes) should be
+     * discovered by the repositories' infrastructure.
+     */
+    boolean considerNestedRepositories() default false;
+
+    /**
+     * Configures whether to enable default transactions for Spring Data JPA repositories. Defaults
+     * to {@literal true}. If disabled, repositories must be used behind a facade that's configuring
+     * transactions (e.g. using Spring's annotation driven transaction facilities) or repository
+     * methods have to be used to demarcate transactions.
+     *
+     * @return whether to enable default transactions, defaults to {@literal true}.
+     */
+    boolean enableDefaultTransactions() default true;
+
+    /**
+     * Configures when the repositories are initialized in the bootstrap lifecycle.
+     * <p>
+     * - {@link BootstrapMode#DEFAULT} (default) means eager initialization except all repository
+     * interfaces annotated with {@link Lazy}
+     * <p>
+     * - {@link BootstrapMode#LAZY} means lazy by default including injection of lazy-initialization
+     * proxies into client beans so that those can be instantiated but will only trigger the
+     * initialization upon first repository usage (i.e a method invocation on it). This means
+     * repositories can still be uninitialized when the application context has completed its
+     * bootstrap.
+     * <p>
+     * - {@link BootstrapMode#DEFERRED} is fundamentally the same as {@link BootstrapMode#LAZY}, but
+     * triggers repository initialization when the application context finishes its bootstrap.
+     *
+     * @return the {@link BootstrapMode} to use for repository initialization.
+     * @since 2.1
+     */
+    BootstrapMode repositoryBootstrapMode() default BootstrapMode.DEFAULT;
   }
 }

@@ -9,8 +9,10 @@ public class EnableConfigAnnotationAndElementHolder {
 
   private final EnableMultiDataSourceConfig annotation;
 
-  public EnableConfigAnnotationAndElementHolder(Element annotatedElement,
-      EnableMultiDataSourceConfig annotation) {
+  public EnableConfigAnnotationAndElementHolder(
+      Element annotatedElement,
+      EnableMultiDataSourceConfig annotation
+  ) {
     this.annotatedElement = annotatedElement;
     this.annotation = annotation;
   }
