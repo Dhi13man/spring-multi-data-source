@@ -96,12 +96,14 @@ for configuring multi-data source configurations for a service. Let's break down
   the `dataSourceConfigs` attribute of `@EnableMultiDataSourceConfig`.
 
 - It has the following attributes:
-    - `dataSourceName`: The name of the data source. It is used to generate the date source
+    - `dataSourceName`: The name of the data source. It is used to generate the data source
       beans and to name the generated classes, packages, and property paths for the data
       source properties.
     - `isPrimary`: Whether the data source is the primary data source. If this is set to
       `true`, the generated beans for this data source will be annotated with `@Primary`. Hence
-      this should be set to `true` for only one data source.
+      this should be set to `true` for only one data source. The primary data source will be able
+      to access every repository other than the repositories generated for the secondary data
+      sources.
     - `dataSourceClassPropertiesPath`: The path of the data source class properties in the
       application properties. Eg. `spring.datasource.hikari` for Hikari data sources.
     - `hibernateBeanContainerPropertyPath`: The path of the Hibernate bean container property in
