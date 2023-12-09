@@ -7,7 +7,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig.DataSourceConfig;
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
 import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import javax.lang.model.element.Modifier;
@@ -32,7 +32,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
- * {@link TargetDataSource} and create copies of the repositories in the relevant packages.
+ * {@link TargetSecondaryDataSource} and create copies of the repositories in the relevant
+ * packages.
  */
 public class MultiDataSourceConfigGenerator {
 
@@ -75,8 +76,8 @@ public class MultiDataSourceConfigGenerator {
    *
    * @param dataSourceConfig            the {@link DataSourceConfig} for which the configuration
    *                                    class is being generated
-   * @param dataSourceName              the name of the data source for which the configuration
-   *                                    class is being generated
+   * @param isPrimaryConfig             whether the data source config is for the primary data
+   *                                    source
    * @param dataSourceConfigClassName   the name of the data source configuration class being
    *                                    generated
    * @param dataSourcePropertiesPath    the path of where the properties of the data source are
@@ -93,7 +94,7 @@ public class MultiDataSourceConfigGenerator {
    */
   public TypeSpec generateMultiDataSourceConfigTypeElement(
       DataSourceConfig dataSourceConfig,
-      String dataSourceName,
+      boolean isPrimaryConfig,
       String dataSourceConfigClassName,
       String dataSourcePropertiesPath,
       String[] repositoryPackagesToInclude,
@@ -103,19 +104,19 @@ public class MultiDataSourceConfigGenerator {
     // Constants exposing important bean names
     final FieldSpec dataSourcePropertiesBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_PROPERTIES_BEAN_NAME_CONSTANT_NAME,
-        dataSourceName + DATA_SOURCE_PROPERTIES_BEAN_SUFFIX
+        dataSourceConfig.dataSourceName() + DATA_SOURCE_PROPERTIES_BEAN_SUFFIX
     );
     final FieldSpec dataSourceBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_BEAN_NAME_CONSTANT_NAME,
-        dataSourceName + DATA_SOURCE_BEAN_SUFFIX
+        dataSourceConfig.dataSourceName() + DATA_SOURCE_BEAN_SUFFIX
     );
     final FieldSpec entityManagerFactoryBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         ENTITY_MANAGER_FACTORY_BEAN_NAME_CONSTANT_NAME,
-        dataSourceName + ENTITY_MANAGER_FACTORY_BEAN_SUFFIX
+        dataSourceConfig.dataSourceName() + ENTITY_MANAGER_FACTORY_BEAN_SUFFIX
     );
     final FieldSpec transactionManagerBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         TRANSACTION_MANAGER_BEAN_NAME_CONSTANT_NAME,
-        dataSourceName + TRANSACTION_MANAGER_BEAN_SUFFIX
+        dataSourceConfig.dataSourceName() + TRANSACTION_MANAGER_BEAN_SUFFIX
     );
     final FieldSpec dataSourceEntityPackageField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_ENTITY_PACKAGES_CONSTANT_NAME,
@@ -160,13 +161,12 @@ public class MultiDataSourceConfigGenerator {
 
     // Create the config class bean creation methods while adding the primary annotation to the
     // DataSourceProperties bean
-    final boolean isMasterConfig = dataSourceConfig.isPrimary();
     final MethodSpec dataSourcePropertiesMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
         createDataSourcePropertiesBeanMethod(
             dataSourcePropertiesPath,
             dataSourcePropertiesBeanNameField
         ),
-        isMasterConfig
+        isPrimaryConfig
     );
 
     // DataSource bean
@@ -176,7 +176,7 @@ public class MultiDataSourceConfigGenerator {
             dataSourceBeanNameField,
             dataSourcePropertiesBeanNameField
         ),
-        isMasterConfig
+        isPrimaryConfig
     );
 
     // EntityManagerFactory bean
@@ -187,7 +187,7 @@ public class MultiDataSourceConfigGenerator {
             entityManagerFactoryBeanNameField,
             dataSourceBeanNameField
         ),
-        isMasterConfig
+        isPrimaryConfig
     );
 
     // TransactionManager bean
@@ -196,7 +196,7 @@ public class MultiDataSourceConfigGenerator {
             transactionManagerBeanNameField,
             entityManagerFactoryBeanNameField
         ),
-        isMasterConfig
+        isPrimaryConfig
     );
 
     // Create the config class

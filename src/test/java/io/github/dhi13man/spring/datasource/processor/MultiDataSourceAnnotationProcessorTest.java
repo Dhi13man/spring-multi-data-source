@@ -3,7 +3,8 @@ package io.github.dhi13man.spring.datasource.processor;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig.DataSourceConfig;
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSources;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils;
@@ -110,10 +111,7 @@ class MultiDataSourceAnnotationProcessorTest {
         .thenReturn(mockAnnotation);
     final DataSourceConfig mockDataSourceConfig = Mockito.mock(DataSourceConfig.class);
     Mockito.when(mockDataSourceConfig.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
-    Mockito.when(mockDataSourceConfig.isPrimary()).thenReturn(true);
-    Mockito.when(mockAnnotation.dataSourceConfigs()).thenReturn(new DataSourceConfig[]{
-        mockDataSourceConfig
-    });
+    Mockito.when(mockAnnotation.primaryDataSourceConfig()).thenReturn(mockDataSourceConfig);
 
     // Act and Assert IllegalArgumentException thrown
     Assertions.assertThrows(
@@ -141,10 +139,7 @@ class MultiDataSourceAnnotationProcessorTest {
         .thenReturn(mockAnnotation);
     final DataSourceConfig mockDataSourceConfig = Mockito.mock(DataSourceConfig.class);
     Mockito.when(mockDataSourceConfig.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
-    Mockito.when(mockDataSourceConfig.isPrimary()).thenReturn(true);
-    Mockito.when(mockAnnotation.dataSourceConfigs()).thenReturn(new DataSourceConfig[]{
-        mockDataSourceConfig
-    });
+    Mockito.when(mockAnnotation.primaryDataSourceConfig()).thenReturn(mockDataSourceConfig);
 
     // Act and Assert IllegalArgumentException thrown
     Assertions.assertThrows(
@@ -175,15 +170,14 @@ class MultiDataSourceAnnotationProcessorTest {
         .thenReturn(mockAnnotation);
     final DataSourceConfig mockDataSourceConfig = Mockito.mock(DataSourceConfig.class);
     Mockito.when(mockDataSourceConfig.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
-    Mockito.when(mockDataSourceConfig.isPrimary()).thenReturn(true);
-    Mockito.when(mockAnnotation.dataSourceConfigs()).thenReturn(new DataSourceConfig[]{
+    Mockito.when(mockAnnotation.secondaryDataSourceConfigs()).thenReturn(new DataSourceConfig[]{
         mockDataSourceConfig
     });
     final TypeSpec mockConfigTypeSpec = TypeSpec.classBuilder("MockConfig").build();
     Mockito.when(
         mockConfigGenerator.generateMultiDataSourceConfigTypeElement(
             mockDataSourceConfig,
-            MOCK_MASTER_DATA_SOURCE_NAME,
+            false,
             MOCK_MASTER_DATA_SOURCE_CONFIG_CLASS_NAME,
             MOCK_DATASOURCE_PROPERTIES_PREFIX + "." + MOCK_MASTER_DATA_SOURCE_NAME,
             mockPackages,
@@ -219,14 +213,11 @@ class MultiDataSourceAnnotationProcessorTest {
     Mockito.when(mockAnnotation.repositoryPackages()).thenReturn(mockPackages);
     final DataSourceConfig mockDataSourceConfig1 = Mockito.mock(DataSourceConfig.class);
     Mockito.when(mockDataSourceConfig1.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
-    Mockito.when(mockDataSourceConfig1.isPrimary()).thenReturn(true);
     final DataSourceConfig mockDataSourceConfig2 = Mockito.mock(DataSourceConfig.class);
     Mockito.when(mockDataSourceConfig2.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
-    Mockito.when(mockDataSourceConfig2.isPrimary()).thenReturn(false);
-    Mockito.when(mockAnnotation.dataSourceConfigs()).thenReturn(new DataSourceConfig[]{
-        mockDataSourceConfig1,
-        mockDataSourceConfig2
-    });
+    Mockito.when(mockAnnotation.primaryDataSourceConfig()).thenReturn(mockDataSourceConfig1);
+    Mockito.when(mockAnnotation.secondaryDataSourceConfigs())
+        .thenReturn(new DataSourceConfig[]{mockDataSourceConfig2});
 
     // Act and Assert
     Assertions.assertThrows(
@@ -252,11 +243,9 @@ class MultiDataSourceAnnotationProcessorTest {
         .thenReturn(mockAnnotation);
     final DataSourceConfig mockDataSourceConfig1 = Mockito.mock(DataSourceConfig.class);
     Mockito.when(mockDataSourceConfig1.dataSourceName()).thenReturn(MOCK_MASTER_DATA_SOURCE_NAME);
-    Mockito.when(mockDataSourceConfig1.isPrimary()).thenReturn(true);
     final DataSourceConfig mockDataSourceConfig2 = Mockito.mock(DataSourceConfig.class);
     Mockito.when(mockDataSourceConfig2.dataSourceName()).thenReturn(MOCK_SLAVE_DATA_SOURCE_NAME);
-    Mockito.when(mockDataSourceConfig2.isPrimary()).thenReturn(false);
-    Mockito.when(mockAnnotation.dataSourceConfigs()).thenReturn(new DataSourceConfig[]{
+    Mockito.when(mockAnnotation.secondaryDataSourceConfigs()).thenReturn(new DataSourceConfig[]{
         mockDataSourceConfig1,
         mockDataSourceConfig2
     });
@@ -295,7 +284,8 @@ class MultiDataSourceAnnotationProcessorTest {
     processor.init(mockProcessingEnvironment);
     final Set<String> expectedAnnotationTypes = Set.of(
         EnableMultiDataSourceConfig.class.getCanonicalName(),
-        TargetDataSource.class.getCanonicalName()
+        TargetSecondaryDataSource.class.getCanonicalName(),
+        TargetSecondaryDataSources.class.getCanonicalName()
     );
 
     // Act

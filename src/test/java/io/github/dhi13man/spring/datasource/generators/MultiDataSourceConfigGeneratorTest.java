@@ -1,6 +1,6 @@
 package io.github.dhi13man.spring.datasource.generators;
 
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
 import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.generated.config.MasterDataSourceConfig;
 import io.github.dhi13man.spring.datasource.generated.config.ReadReplicaDataSourceConfig;
@@ -114,7 +114,7 @@ class MultiDataSourceConfigGeneratorTest {
   public interface MockConfigTestRepository extends JpaRepository<Object, Long> {
 
     @Override
-    @TargetDataSource("read-replica")
+    @TargetSecondaryDataSource("read-replica")
     @NonNull
     List<Object> findAll();
   }

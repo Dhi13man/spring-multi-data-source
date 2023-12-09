@@ -2,18 +2,18 @@ package io.github.dhi13man.spring.datasource.processor;
 
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.MULTIPLE_CLASSES_ANNOTATED_WITH_ENABLE_CONFIG_ANNOTATION;
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.MULTIPLE_CONFIG_ANNOTATIONS_FOR_ONE_DATASOURCE;
-import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NOT_ONE_DATA_SOURCE_CONFIGS_MARKED_PRIMARY;
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_ENTITY_PACKAGES_PROVIDED_IN_CONFIG;
-import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_REPOSITORY_METHOD_ANNOTATED_WITH_MULTI_DATA_SOURCE_REPOSITORY;
+import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_REPOSITORY_METHOD_ANNOTATED_WITH_TARGET_SECONDARY_DATA_SOURCE;
 import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.NO_REPOSITORY_PACKAGES_PROVIDED_IN_CONFIG;
+import static io.github.dhi13man.spring.datasource.constants.MultiDataSourceErrorConstants.REPOSITORY_METHODS_SHOULD_NOT_HAVE_PRIMARY_DATA_SOURCE_AS_TARGET;
 
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig.DataSourceConfig;
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSources;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSources;
 import io.github.dhi13man.spring.datasource.dto.EnableConfigAnnotationAndElementHolder;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceConfigGenerator;
 import io.github.dhi13man.spring.datasource.generators.MultiDataSourceRepositoryGenerator;
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -47,7 +48,8 @@ import org.springframework.util.StringUtils;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
- * {@link TargetDataSource} and create copies of the repositories in the relevant packages.
+ * {@link TargetSecondaryDataSource} and create copies of the repositories in the relevant
+ * packages.
  */
 @AutoService(Processor.class)
 public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
@@ -59,6 +61,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   private static final String CONFIG_PACKAGE_SUFFIX = ".generated.config";
 
   private static final String REPOSITORIES_PACKAGE_SUFFIX = ".generated.repositories";
+
+  private static final String ERROR_WHILE_WRITING_THE_CLASS = "Error while writing the class: ";
 
   private Filer filer;
 
@@ -144,7 +148,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   /**
    * {@inheritDoc}
    * <p>
-   * Performs the following tasks for each {@link TargetDataSource} annotated repository method:
+   * Performs the following tasks for each {@link TargetSecondaryDataSource} annotated repository
+   * method:
    * <p>
    * 1. Aggregates the list of data sources to be used throughout the system
    * <p>
@@ -160,7 +165,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
    */
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-    // Get the element annotated with @EnableMultiDataSourceConfig and validate count
+    // Get the element annotated with @EnableMultiDataSourceConfig and validate
     final EnableConfigAnnotationAndElementHolder holder =
         validateAndGetEnableConfigAnnotationAndElementHolder(roundEnv);
     // No holder means no annotation found
@@ -170,49 +175,47 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     final EnableMultiDataSourceConfig annotation = holder.getAnnotation();
     final Element annotatedElement = holder.getAnnotatedElement();
 
-    // Get the primary data source config and the data source config map
-    final List<DataSourceConfig> dataSourceConfigs = List
-        .of(Objects.requireNonNullElse(annotation.dataSourceConfigs(), new DataSourceConfig[0]));
-    final DataSourceConfig primaryDataSourceConfig =
-        validateAndGetPrimaryDataSourceConfig(dataSourceConfigs);
-    final Map<String, DataSourceConfig> secondaryDataSourceConfigMap =
-        createDataSourceToConfigMap(dataSourceConfigs);
-
-    // Create primary data source configuration class
+    // Create the primary data source config class
+    final DataSourceConfig primaryConfig = validateAndGetPrimaryDataSourceConfig(annotation);
     final PackageElement annotatedElementPackage = elementUtils.getPackageOf(annotatedElement);
     final String nonEmptyGeneratedRepositoryPackagePrefix =
         getGeneratedRepositoryPackagePrefix(annotation, annotatedElementPackage);
     final String nonEmptyGeneratedConfigPackage =
         getGeneratedConfigPackage(annotation, annotatedElementPackage);
     createDataSourceConfigurationClass(
-        primaryDataSourceConfig,
+        primaryConfig,
         annotation,
         nonEmptyGeneratedConfigPackage,
         annotation.repositoryPackages(), // For primary data source, scan all the packages provided
         new String[]{nonEmptyGeneratedRepositoryPackagePrefix} // Generated repos excluded from scan
     );
-    secondaryDataSourceConfigMap.remove(primaryDataSourceConfig.dataSourceName());
 
-    // Get secondary data source to target repository method elements map
+    // Get the data source config maps
+    final List<DataSourceConfig> secondaryDataSourceConfigs = List
+        .of(annotation.secondaryDataSourceConfigs());
     final Map<String, Set<ExecutableElement>> dataSourceToTargetRepositoryMethodMap =
-        createDataSourceToTargetRepositoryMethodMap(roundEnv, secondaryDataSourceConfigMap);
-    // Generate configs for those data sources that do not have @TargetDataSource
-    secondaryDataSourceConfigMap.keySet().stream()
-        .filter(dataSource -> !dataSourceToTargetRepositoryMethodMap.containsKey(dataSource))
-        .map(secondaryDataSourceConfigMap::get)
+        createDataSourceToTargetRepositoryMethodMap(roundEnv, primaryConfig);
+    final Map<String, DataSourceConfig> secondaryDataSourceConfigMap =
+        createDataSourceToConfigMap(secondaryDataSourceConfigs);
+    validateDataSourceConfigs(dataSourceToTargetRepositoryMethodMap, secondaryDataSourceConfigMap);
+
+    // Generate configs for those data sources that do not have @TargetSecondaryDataSource
+    secondaryDataSourceConfigMap.entrySet().stream()
+        .filter(entry -> !dataSourceToTargetRepositoryMethodMap.containsKey(entry.getKey()))
         .forEach(
-            config -> createDataSourceConfigurationClass(
-                config,
+            // All repositories scanned and excluded as no @TargetSecondaryDataSource
+            dataSourceConfigEntry -> createDataSourceConfigurationClass(
+                dataSourceConfigEntry.getValue(),
                 annotation,
                 nonEmptyGeneratedConfigPackage,
-                annotation.repositoryPackages(), // All repos scanned as no @TargetDataSource
-                annotation.repositoryPackages() // All repos excluded as no @TargetDataSource
+                annotation.repositoryPackages(),
+                annotation.repositoryPackages()
             )
         );
     if (dataSourceToTargetRepositoryMethodMap.isEmpty()) {
       messager.printMessage(
           Kind.NOTE,
-          NO_REPOSITORY_METHOD_ANNOTATED_WITH_MULTI_DATA_SOURCE_REPOSITORY
+          NO_REPOSITORY_METHOD_ANNOTATED_WITH_TARGET_SECONDARY_DATA_SOURCE
       );
       return false;
     }
@@ -274,7 +277,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   public Set<String> getSupportedAnnotationTypes() {
     return Set.of(
         EnableMultiDataSourceConfig.class.getCanonicalName(),
-        TargetDataSource.class.getCanonicalName()
+        TargetSecondaryDataSource.class.getCanonicalName(),
+        TargetSecondaryDataSources.class.getCanonicalName()
     );
   }
 
@@ -312,26 +316,33 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     return new EnableConfigAnnotationAndElementHolder(annotatedElement, annotation);
   }
 
+
   /**
-   * Validates that there is exactly one data source config marked as primary and returns it if
-   * found.
+   * Validates that there is exactly one primary data source config and returns it.
    *
-   * @param dataSourceConfigs list of {@link DataSourceConfig}s
-   * @return the primary data source config
+   * @param annotation the {@link EnableMultiDataSourceConfig} annotation
+   * @return the primary {@link DataSourceConfig}
    */
   private DataSourceConfig validateAndGetPrimaryDataSourceConfig(
-      List<DataSourceConfig> dataSourceConfigs
+      EnableMultiDataSourceConfig annotation
   ) {
-    final List<DataSourceConfig> primaryDataSourceConfigs = dataSourceConfigs.stream()
-        .filter(DataSourceConfig::isPrimary)
-        .collect(Collectors.toList());
-    if (primaryDataSourceConfigs.size() != 1) {
-      final String noConfigForPrimaryDataSourceMessage = primaryDataSourceConfigs.size()
-          + NOT_ONE_DATA_SOURCE_CONFIGS_MARKED_PRIMARY;
-      messager.printMessage(Kind.ERROR, noConfigForPrimaryDataSourceMessage);
-      throw new IllegalArgumentException(noConfigForPrimaryDataSourceMessage);
+    final DataSourceConfig primaryConfig = annotation.primaryDataSourceConfig();
+    final DataSourceConfig[] secondaryDataSourceConfigs = Objects
+        .requireNonNullElse(annotation.secondaryDataSourceConfigs(), new DataSourceConfig[]{});
+
+    // Validate that there is exactly one primary data source config
+    final boolean isPrimaryDataSourceNeverSecondaryDataSource = Stream.of(
+            secondaryDataSourceConfigs)
+        .noneMatch(config -> primaryConfig.dataSourceName().equals(config.dataSourceName()));
+    if (isPrimaryDataSourceNeverSecondaryDataSource) {
+      return primaryConfig;
     }
-    return primaryDataSourceConfigs.get(0);
+
+    final String errorMessage = "Primary data source " + primaryConfig.dataSourceName()
+        + " is also marked as a secondary data source. Please do not mark the primary data source"
+        + " as a secondary data source in the @EnableMultiDataSourceConfig annotation.";
+    messager.printMessage(Kind.ERROR, errorMessage);
+    throw new IllegalArgumentException(errorMessage);
   }
 
   /**
@@ -439,9 +450,11 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     }
 
     // Create the data source config class
+    final boolean isPrimaryConfig = dataSourceName
+        .equals(annotation.primaryDataSourceConfig().dataSourceName());
     final TypeSpec configurationTypeSpec = configGenerator.generateMultiDataSourceConfigTypeElement(
         dataSourceConfig,
-        dataSourceName,
+        isPrimaryConfig,
         dataSourceConfigClassName,
         dataSourceConfigPropertiesPath,
         repositoryPackagesToIncludeInScan,
@@ -455,46 +468,44 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
 
   /**
    * Creates a map of the data source name to the set of ExecutableElements that are annotated with
-   * {@link TargetDataSource} for that data source.
+   * {@link TargetSecondaryDataSource} for that data source.
    * <p>
-   * Targets all Classes annotated with {@link TargetDataSource} or its container annotation. Return
-   * a map grouped by the data source name to the set of ExecutableElements that are annotated with
-   * {@link TargetDataSource} for that data source.
+   * Targets all Classes annotated with {@link TargetSecondaryDataSource} or its container
+   * annotation. Return a map grouped by the data source name to the set of ExecutableElements that
+   * are annotated with {@link TargetSecondaryDataSource} for that data source.
    *
-   * @param roundEnv            environment for information about the current and prior round
-   * @param dataSourceConfigMap map of the data source name to the {@link DataSourceConfig}
-   *                            associated with it
+   * @param roundEnv environment for information about the current and prior round
    * @return map of the data source name to the set of ExecutableElements that are annotated with
    */
   private Map<String, Set<ExecutableElement>> createDataSourceToTargetRepositoryMethodMap(
       RoundEnvironment roundEnv,
-      Map<String, DataSourceConfig> dataSourceConfigMap
+      DataSourceConfig primaryDataSourceConfig
   ) {
-    // Deal with individual @TargetDataSource annotations
+    // Deal with individual @TargetSecondaryDataSource annotations
     final Map<String, Set<ExecutableElement>> targetDataSourceAnnotatedMethodMap = roundEnv
-        .getElementsAnnotatedWith(TargetDataSource.class)
+        .getElementsAnnotatedWith(TargetSecondaryDataSource.class)
         .stream()
         .filter(element -> element instanceof ExecutableElement)
         .map(ExecutableElement.class::cast)
         .collect(
             Collectors.groupingBy(
-                x -> x.getAnnotation(TargetDataSource.class).value(),
+                x -> x.getAnnotation(TargetSecondaryDataSource.class).value(),
                 Collectors.toSet()
             )
         );
 
-    // Deal with @TargetDataSources container annotations
+    // Deal with @TargetSecondaryDataSources container annotations
     final Set<ExecutableElement> annotatedElements = roundEnv
-        .getElementsAnnotatedWith(TargetDataSources.class)
+        .getElementsAnnotatedWith(TargetSecondaryDataSources.class)
         .stream()
         .filter(element -> element instanceof ExecutableElement)
         .map(ExecutableElement.class::cast)
         .collect(Collectors.toSet());
     for (final ExecutableElement element : annotatedElements) {
-      final TargetDataSources repositoriesAnnotation = element
-          .getAnnotation(TargetDataSources.class);
+      final TargetSecondaryDataSources repositoriesAnnotation = element
+          .getAnnotation(TargetSecondaryDataSources.class);
       final List<String> dataSourcesInvolved = Arrays.stream(repositoriesAnnotation.value())
-          .map(TargetDataSource::value)
+          .map(TargetSecondaryDataSource::value)
           .collect(Collectors.toList());
       for (final String dataSourceName : dataSourcesInvolved) {
         final Set<ExecutableElement> executableElements = targetDataSourceAnnotatedMethodMap
@@ -504,8 +515,30 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       }
     }
 
-    // Validate that all the data sources involved have a config
-    final Set<String> dataSourcesWithoutConfig = targetDataSourceAnnotatedMethodMap.keySet()
+    if (targetDataSourceAnnotatedMethodMap.containsKey(primaryDataSourceConfig.dataSourceName())) {
+      final String errorMessage = REPOSITORY_METHODS_SHOULD_NOT_HAVE_PRIMARY_DATA_SOURCE_AS_TARGET
+          + targetDataSourceAnnotatedMethodMap.get(primaryDataSourceConfig.dataSourceName());
+      messager.printMessage(Kind.ERROR, errorMessage);
+      throw new IllegalArgumentException(errorMessage);
+    }
+    return targetDataSourceAnnotatedMethodMap;
+  }
+
+  /**
+   * Validates that there is a {@link DataSourceConfig} for each data source being targeted by
+   * {@link TargetSecondaryDataSource} annotations.
+   *
+   * @param dataSourceToTargetRepositoryMethodMap map of the data source name to the set of
+   *                                              {@link ExecutableElement}s that are annotated with
+   *                                              {@link TargetSecondaryDataSource}
+   * @param dataSourceConfigMap                   map of the data source name to the
+   *                                              {@link DataSourceConfig}
+   */
+  private void validateDataSourceConfigs(
+      Map<String, Set<ExecutableElement>> dataSourceToTargetRepositoryMethodMap,
+      Map<String, DataSourceConfig> dataSourceConfigMap
+  ) {
+    final Set<String> dataSourcesWithoutConfig = dataSourceToTargetRepositoryMethodMap.keySet()
         .stream()
         .filter(dataSourceName -> !dataSourceConfigMap.containsKey(dataSourceName))
         .collect(Collectors.toSet());
@@ -516,17 +549,16 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       messager.printMessage(Kind.ERROR, errorMessage);
       throw new IllegalArgumentException(errorMessage);
     }
-    return targetDataSourceAnnotatedMethodMap;
   }
 
   /**
    * Creates a map of the {@link TypeElement} to the set of {@link ExecutableElement}s that are
-   * annotated with {@link TargetDataSource}.
+   * annotated with {@link TargetSecondaryDataSource}.
    *
    * @param executableElements set of {@link ExecutableElement}s that are annotated with
-   *                           {@link TargetDataSource}
+   *                           {@link TargetSecondaryDataSource}
    * @return map of the {@link TypeElement} to the set of {@link ExecutableElement}s that are
-   * annotated with {@link TargetDataSource}
+   * annotated with {@link TargetSecondaryDataSource}
    */
   private Map<TypeElement, Set<ExecutableElement>> createTypeElementToExecutableElementsMap(
       Set<ExecutableElement> executableElements
@@ -588,8 +620,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     try {
       JavaFile.builder(targetPackage, typeSpec).build().writeTo(filer);
     } catch (IOException e) {
-      messager.printMessage(Kind.ERROR, "Error while writing the class: " + e);
-      throw new IllegalStateException("Error while writing the class: " + e);
+      messager.printMessage(Kind.ERROR, ERROR_WHILE_WRITING_THE_CLASS + e);
+      throw new IllegalStateException(ERROR_WHILE_WRITING_THE_CLASS + e);
     }
   }
 

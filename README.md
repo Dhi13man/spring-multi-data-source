@@ -33,7 +33,7 @@ down to this library in the future.
   * [Annotations Provided](#annotations-provided)
     * [@EnableMultiDataSourceConfig](#enablemultidatasourceconfig)
       * [@EnableMultiDataSourceConfig.DataSourceConfig](#enablemultidatasourceconfigdatasourceconfig)
-    * [@TargetDataSource](#targetdatasource)
+    * [@TargetSecondaryDataSource](#targetsecondarydatasource)
   * [Usage](#usage)
   * [Building from Source (Maven)](#building-from-source-maven)
   * [Removing Dependency on spring-multi-data-source without Losing Functionality](#removing-dependency-on-spring-multi-data-source-without-losing-functionality)
@@ -109,7 +109,7 @@ for configuring multi-data source configurations for a service. Let's break down
       the spring bean container to ensure that the hibernate beans like attribute converters are
       managed by spring.
 
-### @TargetDataSource
+### @TargetSecondaryDataSource
 
 - This annotation is used to create copies of repositories in relevant packages and
   autoconfigure them to use the relevant data sources.
@@ -150,8 +150,8 @@ intended to be used for generating code for configuring data sources during the 
       exactEntityPackages = {
         "com.sample.project.sample_service.entities.mysql"
       },
-      dataSourceConfigs = {
-          @DataSourceConfig(dataSourceName = "master", isPrimary = true),
+      primaryDataSourceConfig = @DataSourceConfig(dataSourceName = "master"),
+      secondaryDataSourceConfigs = {
           @DataSourceConfig(dataSourceName = "replica-2"),
           @DataSourceConfig(dataSourceName = "read-replica")
       }
@@ -160,20 +160,20 @@ intended to be used for generating code for configuring data sources during the 
    }
    ```
 
-3. Add the `@TargetDataSource` annotation to the repository methods that need to be
+3. Add the `@TargetSecondaryDataSource` annotation to the repository methods that need to be
    configured for a specific data source, and specify the data source name.
 
     ```java
     @Repository
     public interface ServiceRepository extends JpaRepository<ServiceEntity, Long> {
     
-       @TargetDataSource("read-replica")
+       @TargetSecondaryDataSource("read-replica")
        ServiceEntity findByCustomIdAndDate(String id, Date date);
     
        // To override the default JpaRepository methods in the generated repository
        // All base methods that have not been overridden along with this annotation will throw an 
        // UnsupportedOperationException.
-       @TargetDataSource("read-replica")
+       @TargetSecondaryDataSource("read-replica")
        @Override
        ServiceEntity getById(Long id);
     }
@@ -250,7 +250,7 @@ longer wish to be tied down to this library.
    project from the `target/generated-sources/annotations` directory.
 2. Remove `implements IMultiDataSourceConfig` from the generated `@Configuration` classes.
 3. Remove the `@EnableMultiDataSourceConfig` annotation from your configuration class.
-4. Remove the `@TargetDataSource` annotation from your repository methods.
+4. Remove the `@TargetSecondaryDataSource` annotation from your repository methods.
 5. Remove the `spring-multi-data-source` dependency from your project pom.
 
 And that's all you have to do! You are no longer tied down to this library and have the freedom to
