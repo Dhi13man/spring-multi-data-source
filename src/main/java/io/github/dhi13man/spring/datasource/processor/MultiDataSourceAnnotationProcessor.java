@@ -43,7 +43,9 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
+import org.springframework.data.repository.Repository;
 import org.springframework.util.StringUtils;
 
 /**
@@ -56,8 +58,6 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
 
   private static final String MULTI_DATA_SOURCE_CONFIG_SUFFIX = "DataSourceConfig";
 
-  private static final String JPA_REPOSITORY_INTERFACE_NAME = "JpaRepository";
-
   private static final String CONFIG_PACKAGE_SUFFIX = ".generated.config";
 
   private static final String REPOSITORIES_PACKAGE_SUFFIX = ".generated.repositories";
@@ -69,6 +69,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
   private Messager messager;
 
   private Elements elementUtils;
+
+  private Types typeUtils;
 
   private MultiDataSourceCommonStringUtils commonStringUtils;
 
@@ -101,6 +103,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       Filer filer,
       Messager messager,
       Elements elementUtils,
+      Types typeUtils,
       MultiDataSourceCommonStringUtils commonStringUtils,
       MultiDataSourceGeneratorUtils generatorUtils,
       MultiDataSourceConfigGenerator configGenerator,
@@ -109,6 +112,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     this.filer = filer;
     this.messager = messager;
     this.elementUtils = elementUtils;
+    this.typeUtils = typeUtils;
     this.commonStringUtils = commonStringUtils;
     this.generatorUtils = generatorUtils;
     this.configGenerator = configGenerator;
@@ -130,6 +134,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
     this.messager = Objects.nonNull(this.messager) ? this.messager : processingEnv.getMessager();
     this.elementUtils = Objects.nonNull(this.elementUtils) ? this.elementUtils
         : processingEnv.getElementUtils();
+    this.typeUtils = Objects.nonNull(this.typeUtils) ? this.typeUtils
+        : processingEnv.getTypeUtils();
     this.commonStringUtils = Objects.nonNull(this.commonStringUtils) ? this.commonStringUtils
         : MultiDataSourceCommonStringUtils.getInstance();
     this.generatorUtils = Objects.nonNull(this.generatorUtils) ? this.generatorUtils
@@ -580,15 +586,19 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
    * @return entity name
    */
   private String getJpaRepositoryEntityPackage(TypeElement typeElement) {
-    // Validate that the repository is a valid JPA repository
+    // Validate that the repository is a valid Repository
     final List<? extends TypeMirror> interfaceList = typeElement.getInterfaces();
-    final boolean isEligibleTypeElement = interfaceList.isEmpty()
-        || !(interfaceList.get(0) instanceof DeclaredType)
-        || !((DeclaredType) interfaceList.get(0)).asElement().getSimpleName()
-        .toString().equals(JPA_REPOSITORY_INTERFACE_NAME);
-    if (isEligibleTypeElement) {
+    final DeclaredType validRepositoryType = typeUtils
+        .getDeclaredType(elementUtils.getTypeElement(Repository.class.getCanonicalName()));
+    final boolean isNotEligibleTypeElement = interfaceList.stream()
+        .filter(element -> Objects.nonNull(element) && element instanceof DeclaredType)
+        .noneMatch(
+            element -> typeUtils
+                .isAssignable(((DeclaredType) element).asElement().asType(), validRepositoryType)
+        );
+    if (isNotEligibleTypeElement) {
       final String errorMessage = "Repository " + typeElement.getSimpleName() +
-          " is not a valid JPA repository.";
+          " is not a valid repository.";
       messager.printMessage(Kind.ERROR, errorMessage);
       throw new IllegalArgumentException(errorMessage);
     }

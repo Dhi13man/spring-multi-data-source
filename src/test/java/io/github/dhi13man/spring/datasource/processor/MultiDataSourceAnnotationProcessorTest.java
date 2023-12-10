@@ -19,6 +19,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -44,6 +45,8 @@ class MultiDataSourceAnnotationProcessorTest {
 
   private final Elements mockElementUtils = Mockito.mock(Elements.class);
 
+  private final Types mockTypeUtils = Mockito.mock(Types.class);
+
   private final MultiDataSourceCommonStringUtils mockStringUtils = Mockito
       .mock(MultiDataSourceCommonStringUtils.class);
 
@@ -60,6 +63,7 @@ class MultiDataSourceAnnotationProcessorTest {
       mockFiler,
       mockMessager,
       mockElementUtils,
+      mockTypeUtils,
       mockStringUtils,
       mockGeneratorUtils,
       mockConfigGenerator,
