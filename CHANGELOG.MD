@@ -2,8 +2,52 @@
 
 ## [0.2.1] - 10th December 2023
 
-- BREAKING CHANGE: Better Organise DataSourceConfig to segregate Primary and Secondary data sources as per Spring
-  Convention.
+- BREAKING CHANGE: Better Organise DataSourceConfig to segregate Primary and Secondary data sources
+  as per Spring Convention. Also renamed `@TargetDataSource` to `@TargetSecondaryDataSource` to\
+  avoid confusion.
+
+  Before:
+
+  ```java
+  @Configuration
+  @EnableMultiDataSourceConfig(
+    repositoryPackages = {
+      "com.sample"
+    },
+    exactEntityPackages = {
+      "com.sample.project.sample_service.entities.mysql"
+    },
+    dataSourceConfigs = {
+        @DataSourceConfig(dataSourceName = "master", isPrimary = true),
+        @DataSourceConfig(dataSourceName = "replica-2"),
+        @DataSourceConfig(dataSourceName = "read-replica")
+    }
+  )
+  public class ServiceConfig {
+  }
+  ```
+
+  After:
+
+  ```java
+   @Configuration
+   @EnableMultiDataSourceConfig(
+      repositoryPackages = {
+        "com.sample"
+      },
+      exactEntityPackages = {
+        "com.sample.project.sample_service.entities.mysql"
+      },
+      primaryDataSourceConfig = @DataSourceConfig(dataSourceName = "master"),
+      secondaryDataSourceConfigs = {
+          @DataSourceConfig(dataSourceName = "replica-2"),
+          @DataSourceConfig(dataSourceName = "read-replica")
+      }
+   )
+   public class ServiceConfig {
+   }
+  ```
+
 - Allow `@TargetSecondaryDataSource` to be placed on any Repository, not just JpaRepository.
 - Adaptive `EntityManagerFactory` for `TransactionManager` will be generated based on
   `LocalContainerEntityManagerFactoryBean`. Decoupled from Javax/Jakarta implementations.
