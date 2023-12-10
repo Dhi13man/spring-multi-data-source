@@ -49,6 +49,7 @@
   ```
 
 - Allow `@TargetSecondaryDataSource` to be placed on any Repository, not just JpaRepository.
+
 - Adaptive `EntityManagerFactory` for `TransactionManager` will be generated based on
   `LocalContainerEntityManagerFactoryBean`. Decoupled from Javax/Jakarta implementations.
 
