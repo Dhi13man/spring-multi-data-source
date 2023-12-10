@@ -2,7 +2,7 @@
 
 ## [0.2.1] - 10th December 2023
 
-- BREAKING: Better Organise DataSourceConfig to segregate Primary and Secondary data sources as per Spring
+- BREAKING CHANGE: Better Organise DataSourceConfig to segregate Primary and Secondary data sources as per Spring
   Convention.
 - Allow `@TargetSecondaryDataSource` to be placed on any Repository, not just JpaRepository.
 - Adaptive `EntityManagerFactory` for `TransactionManager` will be generated based on
