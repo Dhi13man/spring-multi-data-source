@@ -1,5 +1,13 @@
 # Releases
 
+## [0.2.1] - 10th December 2023
+
+- BREAKING: Better Organise DataSourceConfig to segregate Primary and Secondary data sources as per Spring
+  Convention.
+- Allow `@TargetSecondaryDataSource` to be placed on any Repository, not just JpaRepository.
+- Adaptive `EntityManagerFactory` for `TransactionManager` will be generated based on
+  `LocalContainerEntityManagerFactoryBean`. Decoupled from Javax/Jakarta implementations.
+
 ## [0.1.2] - 6th October 2023
 
 - HOTFIX: Fix `@EnableJpaRepositories.basePackages` being empty for secondary data sources
