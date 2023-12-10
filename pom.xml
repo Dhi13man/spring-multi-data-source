@@ -164,12 +164,6 @@
     </dependency>
 
     <dependency>
-      <artifactId>javax.persistence-api</artifactId>
-      <groupId>javax.persistence</groupId>
-      <version>2.2</version>
-    </dependency>
-
-    <dependency>
       <artifactId>junit-jupiter</artifactId>
       <groupId>org.junit.jupiter</groupId>
       <scope>test</scope>

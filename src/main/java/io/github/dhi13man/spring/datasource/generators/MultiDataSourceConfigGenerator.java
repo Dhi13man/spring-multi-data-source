@@ -404,7 +404,7 @@ public class MultiDataSourceConfigGenerator {
 
     // Create the method parameters (EntityManagerFactory dependency)
     final ParameterSpec entityManagerFactoryParameter = ParameterSpec
-        .builder(EntityManagerFactory.class, "entityManagerFactory")
+        .builder(LocalContainerEntityManagerFactoryBean.class, "entityManagerFactoryBean")
         .addAnnotation(qualifierAnnotation)
         .build();
 
@@ -416,7 +416,7 @@ public class MultiDataSourceConfigGenerator {
         .returns(PlatformTransactionManager.class)
         .addParameter(entityManagerFactoryParameter)
         .addStatement(
-            "return new $T($N)",
+            "return new $T($N.getNativeEntityManagerFactory())",
             JpaTransactionManager.class,
             entityManagerFactoryParameter
         );
