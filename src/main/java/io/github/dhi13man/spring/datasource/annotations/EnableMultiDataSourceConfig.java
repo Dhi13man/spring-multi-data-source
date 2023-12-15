@@ -18,8 +18,8 @@ public @interface EnableMultiDataSourceConfig {
    * This must be an exact package name, and not a prefix as custom entity managers can not
    * recursively scan entities inside nested packages.
    * <p>
-   * If {@link TargetDataSource} is used on any repository, the package of the entity that the
-   * repository is associated with will also be scanned for entities.
+   * If {@link TargetSecondaryDataSource} is used on any repository, the package of the entity that
+   * the repository is associated with will also be scanned for entities.
    *
    * @return the array of exact packages to scan for entities.
    */
@@ -74,15 +74,23 @@ public @interface EnableMultiDataSourceConfig {
   String generatedRepositoryPackagePrefix() default "";
 
   /**
-   * The array of {@link DataSourceConfig} annotations which contain the configuration for each data
-   * source.
+   * The config for the primary data source.
+   * <p>
+   * The primary data source is the data source which will be used by default for all repositories
+   * which do not have the {@link TargetSecondaryDataSource} annotation.
+   *
+   * @return the {@link DataSourceConfig} annotation for the primary data source.
+   */
+  DataSourceConfig primaryDataSourceConfig() default @DataSourceConfig(dataSourceName = "master");
+
+  /**
+   * The array of {@link DataSourceConfig} annotations which contain the configuration for each
+   * secondary data source.
    *
    * @return the array of {@link DataSourceConfig} annotations.
    * @see DataSourceConfig
    */
-  DataSourceConfig[] dataSourceConfigs() default {
-      @DataSourceConfig(dataSourceName = "master", isPrimary = true)
-  };
+  DataSourceConfig[] secondaryDataSourceConfigs() default {};
 
   @Retention(RetentionPolicy.RUNTIME)
   @Target({})
@@ -103,15 +111,6 @@ public @interface EnableMultiDataSourceConfig {
      * @return the name of the data source.
      */
     String dataSourceName() default "";
-
-    /**
-     * Whether this data source is the primary data source.
-     * <p>
-     * There must be exactly one primary data source.
-     *
-     * @return whether this data source is the primary data source.
-     */
-    boolean isPrimary() default false;
 
     /**
      * The key of the data source class properties in the application properties file.

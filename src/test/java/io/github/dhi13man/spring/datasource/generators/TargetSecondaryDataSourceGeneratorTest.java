@@ -1,6 +1,6 @@
 package io.github.dhi13man.spring.datasource.generators;
 
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
 import io.github.dhi13man.spring.datasource.generated.repositories.read_replica.ReadReplicaMockConfigTestRepository;
 import io.github.dhi13man.spring.datasource.generated.repositories.replica_2.Replica2MockRepositoryTestRepository;
 import java.lang.reflect.Method;
@@ -12,7 +12,7 @@ import org.junit.platform.commons.util.ReflectionUtils;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;
 
-class TargetDataSourceGeneratorTest {
+class TargetSecondaryDataSourceGeneratorTest {
 
   @Test
   void generateRepositoryTypeElementWithAnnotatedMethods() {
@@ -54,7 +54,7 @@ class TargetDataSourceGeneratorTest {
     // Replica2MockConfigTestRepository (as it overrides the findAll method of JpaRepository).
     //
     // However, the findAll method of Replica2MockConfigTestRepository will throw an exception
-    // as it is annotated only with @TargetDataSource("read-replica"). Hence, the method
+    // as it is annotated only with @TargetSecondaryDataSource("read-replica"). Hence, the method
     // is disabled in the Replica2MockConfigTestRepository generated class.
     final Optional<Method> findAllMockConfigTestRepository = ReflectionUtils.findMethod(
         mockConfigTestRepositoryClass,
@@ -76,11 +76,11 @@ class TargetDataSourceGeneratorTest {
 
   public interface MockRepositoryTestRepository extends JpaRepository<String, Long> {
 
-    @TargetDataSource("replica-2")
+    @TargetSecondaryDataSource("replica-2")
     Object findByCustomObjectId(long customObjectId);
 
     @Override
-    @TargetDataSource("read-replica")
+    @TargetSecondaryDataSource("read-replica")
     @NonNull
     List<String> findAll();
   }

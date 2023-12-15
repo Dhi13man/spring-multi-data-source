@@ -8,8 +8,8 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSources;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSources;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import java.util.HashSet;
@@ -32,7 +32,8 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
- * {@link TargetDataSource} and create copies of the repositories in the relevant packages.
+ * {@link TargetSecondaryDataSource} and create copies of the repositories in the relevant
+ * packages.
  */
 public class MultiDataSourceRepositoryGenerator {
 
@@ -257,13 +258,13 @@ public class MultiDataSourceRepositoryGenerator {
    */
   private MethodSpec convertExecutableMethodElementToMethodSpec(ExecutableElement method) {
     // Copy all annotations other than the ones used to mark the method as a repository method
-    // (i.e. @TargetDataSources and @TargetDataSource)
+    // (i.e. @TargetSecondaryDataSources and @TargetSecondaryDataSource)
     final List<AnnotationSpec> annotationsToSpec = method.getAnnotationMirrors().stream()
         .map(AnnotationSpec::get)
         .filter(
             annotationSpec -> !Set.of(
-                TypeName.get(TargetDataSources.class),
-                TypeName.get(TargetDataSource.class)
+                TypeName.get(TargetSecondaryDataSources.class),
+                TypeName.get(TargetSecondaryDataSource.class)
             ).contains(annotationSpec.type)
         )
         .collect(Collectors.toList());

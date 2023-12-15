@@ -5,7 +5,6 @@
 
 package io.github.dhi13man.spring.datasource.config;
 
-import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -52,8 +51,11 @@ public interface IMultiDataSourceConfig {
   /**
    * Get the transaction manager to be used for the data source.
    *
-   * @param entityManagerFactory The entity manager factory, used to create the transaction manager
+   * @param entityManagerFactoryBean The entity manager factory bean, used to create the transaction
+   *                                 manager
    * @return The transaction manager.
    */
-  PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory);
+  PlatformTransactionManager transactionManager(
+      LocalContainerEntityManagerFactoryBean entityManagerFactoryBean
+  );
 }

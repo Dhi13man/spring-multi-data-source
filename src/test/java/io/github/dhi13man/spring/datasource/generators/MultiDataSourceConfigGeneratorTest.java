@@ -1,6 +1,6 @@
 package io.github.dhi13man.spring.datasource.generators;
 
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
 import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.generated.config.MasterDataSourceConfig;
 import io.github.dhi13man.spring.datasource.generated.config.ReadReplicaDataSourceConfig;
@@ -9,7 +9,6 @@ import io.github.dhi13man.spring.datasource.generated.config.ReplicaNoTargetData
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -99,8 +98,10 @@ class MultiDataSourceConfigGeneratorTest {
 
     for (final IMultiDataSourceConfig generatedConfig : generatedConfigs) {
       // Arrange
-      final EntityManagerFactory mockEntityManagerFactory = Mockito
-          .mock(EntityManagerFactory.class);
+      final LocalContainerEntityManagerFactoryBean mockEntityManagerFactory = Mockito
+          .mock(LocalContainerEntityManagerFactoryBean.class);
+      Mockito.when(mockEntityManagerFactory.getNativeEntityManagerFactory())
+          .thenReturn(Mockito.mock());
 
       // Act
       final PlatformTransactionManager transactionManager = generatedConfig
@@ -114,7 +115,7 @@ class MultiDataSourceConfigGeneratorTest {
   public interface MockConfigTestRepository extends JpaRepository<Object, Long> {
 
     @Override
-    @TargetDataSource("read-replica")
+    @TargetSecondaryDataSource("read-replica")
     @NonNull
     List<Object> findAll();
   }
