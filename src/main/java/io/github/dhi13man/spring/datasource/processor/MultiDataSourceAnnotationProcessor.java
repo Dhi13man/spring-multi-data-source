@@ -337,8 +337,8 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
         .requireNonNullElse(annotation.secondaryDataSourceConfigs(), new DataSourceConfig[]{});
 
     // Validate that there is exactly one primary data source config
-    final boolean isPrimaryDataSourceNeverSecondaryDataSource = Stream.of(
-            secondaryDataSourceConfigs)
+    final boolean isPrimaryDataSourceNeverSecondaryDataSource = Stream
+        .of(secondaryDataSourceConfigs)
         .noneMatch(config -> primaryConfig.dataSourceName().equals(config.dataSourceName()));
     if (isPrimaryDataSourceNeverSecondaryDataSource) {
       return primaryConfig;
@@ -544,12 +544,12 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
       Map<String, Set<ExecutableElement>> dataSourceToTargetRepositoryMethodMap,
       Map<String, DataSourceConfig> dataSourceConfigMap
   ) {
-    final Set<String> dataSourcesWithoutConfig = dataSourceToTargetRepositoryMethodMap.keySet()
-        .stream()
-        .filter(dataSourceName -> !dataSourceConfigMap.containsKey(dataSourceName))
-        .collect(Collectors.toSet());
-    if (!dataSourcesWithoutConfig.isEmpty()) {
-      final String errorMessage = "No config found for data sources: " + dataSourcesWithoutConfig
+    for (final String dataSourceName : dataSourceToTargetRepositoryMethodMap.keySet()) {
+      if (dataSourceConfigMap.containsKey(dataSourceName)) {
+        continue;
+      }
+
+      final String errorMessage = "No config found for data source: " + dataSourceName
           + ". Please provide a @DataSourceConfig for each data source in the"
           + " @EnableMultiDataSourceConfig annotation.";
       messager.printMessage(Kind.ERROR, errorMessage);
