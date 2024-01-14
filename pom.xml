@@ -133,7 +133,7 @@
       </exclusions>
       <groupId>org.springframework.data</groupId>
       <scope>provided</scope>
-      <version>2.6.10</version>
+      <version>${spring.boot.version}</version>
     </dependency>
 
     <dependency>
@@ -223,7 +223,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <sonar.language>java</sonar.language>
-    <spring.boot.version>2.6.15</spring.boot.version>
+    <spring.boot.version>2.7.18</spring.boot.version>
   </properties>
   <scm>
     <connection>scm:git:git://github.com/Dhi13man/spring-multi-data-source.git</connection>
