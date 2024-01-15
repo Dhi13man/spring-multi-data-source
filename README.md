@@ -101,10 +101,10 @@ for configuring multi-data source configurations for a service. Let's break down
     - `dataSourceName`: The name of the data source. It is used to generate the date source
       beans and to name the generated classes, packages, and property paths for the data
       source properties.
-    - `dataSourceClassPropertiesPath`: The key/path of the data source class properties in the
-      application properties. Eg. `spring.datasource.hikari` for Hikari data sources.
-    - `overridingPropertiesPath`:  The key/path under which the JPA properties to override for this
-      data source are located in the application properties file. This allows overriding of the JPA
+    - `dataSourceClassPropertiesPath`:The application properties key/path of the data source class'
+      properties. Eg. `spring.datasource.hikari` for Hikari data sources.
+    - `overridingPropertiesPath`:  The application properties key/path under which the JPA
+      properties to override for this data source are located. This allows overriding of the JPA
       properties for each data source. By default, it will take the default `spring.jpa.properties`
       path.
 

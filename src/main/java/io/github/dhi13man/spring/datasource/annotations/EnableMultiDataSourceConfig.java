@@ -113,15 +113,15 @@ public @interface EnableMultiDataSourceConfig {
     String dataSourceName() default "";
 
     /**
-     * The key/path of the data source class properties in the application properties file.
+     * The application properties key/path of the data source class properties.
      *
      * @return the prefix of the data source class properties in the application properties file.
      */
     String dataSourceClassPropertiesPath() default "spring.datasource.hikari";
 
     /**
-     * The key/path under which the JPA properties to override are located in the application
-     * properties file.
+     * The application properties key/path under which the JPA properties to override for this data
+     * source are located.
      * <p>
      * This allows overriding of the JPA properties for each data source. The properties under this
      * key will be merged with the usual properties under the spring.jpa.properties key.

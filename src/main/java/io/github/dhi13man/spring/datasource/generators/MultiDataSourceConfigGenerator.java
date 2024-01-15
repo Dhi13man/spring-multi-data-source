@@ -206,7 +206,7 @@ public class MultiDataSourceConfigGenerator {
     final MethodSpec entityManagerFactoryMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
         createEntityManagerFactoryBeanMethod(
             entityManagerFactoryBeanNameField,
-            dataSourceEntityPackageField,
+            dataSourceBeanNameField,
             overrideJpaPropertiesBeanNameField,
             dataSourceEntityPackageField,
             hibernateBeanContainerPropertyField
