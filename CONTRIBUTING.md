@@ -6,13 +6,7 @@
 [![GitHub Repo stars](https://img.shields.io/github/stars/dhi13man/spring-multi-data-source?style=social)](https://github.com/Dhi13man/spring-multi-data-source)
 [![Last Commit](https://img.shields.io/github/last-commit/dhi13man/spring-multi-data-source)](https://github.com/Dhi13man/spring-multi-data-source/commits/main)
 
-Thank you for investing your time in contributing to this project! Any contributions you make have a
-chance of reflecting
-in [the actual Package on Pub.dev](https://pub.dev/packages/spring-multi-data-source/), and
-brightens up my day. :)
-
-Make sure you go through the [API Documentation](https://openrouteservice.org/dev/#/api-docs/)
-first!
+Thank you for investing your time in contributing to this project!
 
 ## General Steps to Contribute
 

@@ -87,7 +87,9 @@ for configuring multi-data source configurations for a service. Let's break down
       same package as the class where this annotation is applied, followed by
       `.generated.repositories` and then `.<data_source_name>`.
     - `primaryDataSourceConfig`: A `@DataSourceConfig` annotation. This annotation represents
-      the primary data source and its configuration.
+      the primary data source and its configuration. The primary data source will be able
+      to access every repository other than the repositories generated for the secondary data
+      sources.
     - `dataSourceConfigs`: An array of `@DataSourceConfig` annotations. Each annotation represents
       a data source and its configuration.
 
@@ -98,7 +100,7 @@ for configuring multi-data source configurations for a service. Let's break down
   the `dataSourceConfigs` attribute of `@EnableMultiDataSourceConfig`.
 
 - It has the following attributes:
-    - `dataSourceName`: The name of the data source. It is used to generate the date source
+    - `dataSourceName`: The name of the data source. It is used to generate the data source
       beans and to name the generated classes, packages, and property paths for the data
       source properties.
     - `dataSourceClassPropertiesPath`:The application properties key/path of the data source class'
