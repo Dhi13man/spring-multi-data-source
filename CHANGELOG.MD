@@ -1,5 +1,62 @@
 # Releases
 
+## [0.2.1] - 10th December 2023
+
+- BREAKING CHANGE: Better organised DataSourceConfig to segregate Primary and Secondary data sources
+  as per Spring Convention. Also renamed `@TargetDataSource` to `@TargetSecondaryDataSource` to
+  avoid confusion.
+
+  Before:
+
+  ```java
+  @Configuration
+  @EnableMultiDataSourceConfig(
+    repositoryPackages = {
+      "com.sample"
+    },
+    exactEntityPackages = {
+      "com.sample.project.sample_service.entities.mysql"
+    },
+    dataSourceConfigs = {
+        @DataSourceConfig(dataSourceName = "master", isPrimary = true),
+        @DataSourceConfig(dataSourceName = "replica-2"),
+        @DataSourceConfig(dataSourceName = "read-replica")
+    }
+  )
+  public class ServiceConfig {
+  }
+  ```
+
+  After:
+
+  ```java
+   @Configuration
+   @EnableMultiDataSourceConfig(
+      repositoryPackages = {
+        "com.sample"
+      },
+      exactEntityPackages = {
+        "com.sample.project.sample_service.entities.mysql"
+      },
+      primaryDataSourceConfig = @DataSourceConfig(dataSourceName = "master"),
+      secondaryDataSourceConfigs = {
+          @DataSourceConfig(dataSourceName = "replica-2"),
+          @DataSourceConfig(dataSourceName = "read-replica")
+      }
+   )
+   public class ServiceConfig {
+   }
+  ```
+
+- Allow `@TargetSecondaryDataSource` to be placed on any Repository, not just JpaRepository.
+
+- Adaptive `EntityManagerFactory` for `TransactionManager` will be generated based on
+  `LocalContainerEntityManagerFactoryBean`. Decoupled from Javax/Jakarta implementations.
+
+- Allow possibility for overriding different JPA properties for each data source by adding
+  `@DataSourceConfig.overridingJpaPropertiesPath` field. By default, it will take the default
+  `spring.jpa.properties` path.
+
 ## [0.1.2] - 6th October 2023
 
 - HOTFIX: Fix `@EnableJpaRepositories.basePackages` being empty for secondary data sources

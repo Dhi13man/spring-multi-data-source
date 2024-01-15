@@ -7,16 +7,16 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig.DataSourceConfig;
-import io.github.dhi13man.spring.datasource.annotations.TargetDataSource;
+import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
 import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
+import java.util.Properties;
 import javax.lang.model.element.Modifier;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
@@ -32,12 +32,13 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * Annotation processor to generate config classes for all the repositories annotated with
- * {@link TargetDataSource} and create copies of the repositories in the relevant packages.
+ * {@link TargetSecondaryDataSource} and create copies of the repositories in the relevant
+ * packages.
  */
 public class MultiDataSourceConfigGenerator {
 
+  public static final String OVERRIDING_JPA_PROPERTIES_BEAN_SUFFIX = "-overriding-jpa-properties";
   private static final String DATA_SOURCE_PROPERTIES_BEAN_SUFFIX = "-data-source-properties";
-
   private static final String DATA_SOURCE_BEAN_SUFFIX = "-data-source";
 
   private static final String ENTITY_MANAGER_FACTORY_BEAN_SUFFIX = "-entity-manager-factory";
@@ -45,6 +46,8 @@ public class MultiDataSourceConfigGenerator {
   private static final String TRANSACTION_MANAGER_BEAN_SUFFIX = "-transaction-manager";
 
   private static final String DATA_SOURCE_PROPERTIES_BEAN_NAME_CONSTANT_NAME = "DATA_SOURCE_PROPERTIES_BEAN_NAME";
+
+  private static final String OVERRIDING_JPA_PROPERTIES_BEAN_NAME_CONSTANT_NAME = "OVERRIDING_JPA_PROPERTIES";
 
   private static final String DATA_SOURCE_BEAN_NAME_CONSTANT_NAME = "DATA_SOURCE_BEAN_NAME";
 
@@ -57,6 +60,10 @@ public class MultiDataSourceConfigGenerator {
   private static final String ADD_THE_SPRING_BEAN_CONTAINER_TO_THE_HIBERNATE_PROPERTIES = "Adds the SpringBeanContainer to the hibernate properties to allow the use of Spring beans in JPQL queries";
 
   private static final String VALUE_FIELD_NAME_STRING = "value";
+
+  private static final String HIBERNATE_BEAN_CONTAINER_PROPERTY_CONSTANT_NAME = "HIBERNATE_BEAN_CONTAINER_PROPERTY";
+
+  private static final String HIBERNATE_BEAN_CONTAINER_PROPERTY_PATH = "hibernate.resource.beans.container";
 
   private final MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils;
 
@@ -75,8 +82,8 @@ public class MultiDataSourceConfigGenerator {
    *
    * @param dataSourceConfig            the {@link DataSourceConfig} for which the configuration
    *                                    class is being generated
-   * @param dataSourceName              the name of the data source for which the configuration
-   *                                    class is being generated
+   * @param isPrimaryConfig             whether the data source config is for the primary data
+   *                                    source
    * @param dataSourceConfigClassName   the name of the data source configuration class being
    *                                    generated
    * @param dataSourcePropertiesPath    the path of where the properties of the data source are
@@ -93,7 +100,7 @@ public class MultiDataSourceConfigGenerator {
    */
   public TypeSpec generateMultiDataSourceConfigTypeElement(
       DataSourceConfig dataSourceConfig,
-      String dataSourceName,
+      boolean isPrimaryConfig,
       String dataSourceConfigClassName,
       String dataSourcePropertiesPath,
       String[] repositoryPackagesToInclude,
@@ -103,23 +110,31 @@ public class MultiDataSourceConfigGenerator {
     // Constants exposing important bean names
     final FieldSpec dataSourcePropertiesBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_PROPERTIES_BEAN_NAME_CONSTANT_NAME,
-        dataSourceName + DATA_SOURCE_PROPERTIES_BEAN_SUFFIX
+        dataSourceConfig.dataSourceName() + DATA_SOURCE_PROPERTIES_BEAN_SUFFIX
+    );
+    final FieldSpec overrideJpaPropertiesBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
+        OVERRIDING_JPA_PROPERTIES_BEAN_NAME_CONSTANT_NAME,
+        dataSourceConfig.dataSourceName() + OVERRIDING_JPA_PROPERTIES_BEAN_SUFFIX
     );
     final FieldSpec dataSourceBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_BEAN_NAME_CONSTANT_NAME,
-        dataSourceName + DATA_SOURCE_BEAN_SUFFIX
+        dataSourceConfig.dataSourceName() + DATA_SOURCE_BEAN_SUFFIX
     );
     final FieldSpec entityManagerFactoryBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         ENTITY_MANAGER_FACTORY_BEAN_NAME_CONSTANT_NAME,
-        dataSourceName + ENTITY_MANAGER_FACTORY_BEAN_SUFFIX
+        dataSourceConfig.dataSourceName() + ENTITY_MANAGER_FACTORY_BEAN_SUFFIX
     );
     final FieldSpec transactionManagerBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         TRANSACTION_MANAGER_BEAN_NAME_CONSTANT_NAME,
-        dataSourceName + TRANSACTION_MANAGER_BEAN_SUFFIX
+        dataSourceConfig.dataSourceName() + TRANSACTION_MANAGER_BEAN_SUFFIX
     );
     final FieldSpec dataSourceEntityPackageField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
         DATA_SOURCE_ENTITY_PACKAGES_CONSTANT_NAME,
         dataSourceEntityPackages
+    );
+    final FieldSpec hibernateBeanContainerPropertyField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
+        HIBERNATE_BEAN_CONTAINER_PROPERTY_CONSTANT_NAME,
+        HIBERNATE_BEAN_CONTAINER_PROPERTY_PATH
     );
 
     // Create the config class level annotations
@@ -160,34 +175,43 @@ public class MultiDataSourceConfigGenerator {
 
     // Create the config class bean creation methods while adding the primary annotation to the
     // DataSourceProperties bean
-    final boolean isMasterConfig = dataSourceConfig.isPrimary();
     final MethodSpec dataSourcePropertiesMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
         createDataSourcePropertiesBeanMethod(
-            dataSourcePropertiesPath,
-            dataSourcePropertiesBeanNameField
+            dataSourcePropertiesBeanNameField,
+            dataSourcePropertiesPath
         ),
-        isMasterConfig
+        isPrimaryConfig
+    );
+
+    // Overriding JPA Properties bean
+    final MethodSpec overridingJpaPropertiesMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        createOverridingJpaPropertiesBeanMethod(
+            overrideJpaPropertiesBeanNameField,
+            dataSourceConfig.overridingJpaPropertiesPath()
+        ),
+        isPrimaryConfig
     );
 
     // DataSource bean
     final MethodSpec dataSourceMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
         createDataSourceBeanMethod(
-            dataSourceConfig.dataSourceClassPropertiesPath(),
             dataSourceBeanNameField,
+            dataSourceConfig.dataSourceClassPropertiesPath(),
             dataSourcePropertiesBeanNameField
         ),
-        isMasterConfig
+        isPrimaryConfig
     );
 
     // EntityManagerFactory bean
     final MethodSpec entityManagerFactoryMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
         createEntityManagerFactoryBeanMethod(
-            dataSourceConfig.hibernateBeanContainerPropertyPath(),
-            dataSourceEntityPackageField,
             entityManagerFactoryBeanNameField,
-            dataSourceBeanNameField
+            dataSourceBeanNameField,
+            overrideJpaPropertiesBeanNameField,
+            dataSourceEntityPackageField,
+            hibernateBeanContainerPropertyField
         ),
-        isMasterConfig
+        isPrimaryConfig
     );
 
     // TransactionManager bean
@@ -196,7 +220,7 @@ public class MultiDataSourceConfigGenerator {
             transactionManagerBeanNameField,
             entityManagerFactoryBeanNameField
         ),
-        isMasterConfig
+        isPrimaryConfig
     );
 
     // Create the config class
@@ -206,11 +230,14 @@ public class MultiDataSourceConfigGenerator {
         .addAnnotation(enableJpaRepositoriesAnnotationBuilder.build())
         .addModifiers(Modifier.PUBLIC)
         .addField(dataSourcePropertiesBeanNameField)
+        .addField(overrideJpaPropertiesBeanNameField)
         .addField(dataSourceBeanNameField)
         .addField(entityManagerFactoryBeanNameField)
         .addField(transactionManagerBeanNameField)
         .addField(dataSourceEntityPackageField)
+        .addField(hibernateBeanContainerPropertyField)
         .addMethod(dataSourcePropertiesMethod)
+        .addMethod(overridingJpaPropertiesMethod)
         .addMethod(dataSourceMethod)
         .addMethod(entityManagerFactoryMethod)
         .addMethod(transactionManagerMethod)
@@ -242,14 +269,14 @@ public class MultiDataSourceConfigGenerator {
   /**
    * Create the {@link MethodSpec} builder for the {@link DataSourceProperties} bean.
    *
+   * @param beanNameFieldSpec        the {@link FieldSpec} for this bean name constant
    * @param datasourcePropertiesPath the path of where the properties of the data source are located
    *                                 in application.properties
-   * @param beanNameFieldSpec        the {@link FieldSpec} for the bean name constant
    * @return the {@link MethodSpec} builder for the {@link DataSourceProperties} bean
    */
   private MethodSpec.Builder createDataSourcePropertiesBeanMethod(
-      String datasourcePropertiesPath,
-      FieldSpec beanNameFieldSpec
+      FieldSpec beanNameFieldSpec,
+      String datasourcePropertiesPath
   ) {
     // Create the method annotations
     final AnnotationSpec beanAnnotation = createBeanAnnotationFromFieldSpec(beanNameFieldSpec);
@@ -269,19 +296,49 @@ public class MultiDataSourceConfigGenerator {
   }
 
   /**
+   * Create the {@link MethodSpec} builder for the {@link java.util.Properties} bean containing JPA
+   * properties to override.
+   *
+   * @param beanNameFieldSpec           the {@link FieldSpec} for this bean name constant
+   * @param overridingJpaPropertiesPath The key under which the JPA properties to override are
+   *                                    located in the application properties file.
+   * @return the {@link MethodSpec} builder for the {@link DataSourceProperties} bean
+   */
+  private MethodSpec.Builder createOverridingJpaPropertiesBeanMethod(
+      FieldSpec beanNameFieldSpec,
+      String overridingJpaPropertiesPath
+  ) {
+    // Create the method annotations
+    final AnnotationSpec beanAnnotation = createBeanAnnotationFromFieldSpec(beanNameFieldSpec);
+    final AnnotationSpec configurationPropertiesAnnotation = AnnotationSpec
+        .builder(ConfigurationProperties.class)
+        .addMember("prefix", "$S", overridingJpaPropertiesPath)
+        .build();
+
+    // Create the method body
+    return MethodSpec.methodBuilder("overridingJpaProperties")
+        .addAnnotation(beanAnnotation)
+        .addAnnotation(configurationPropertiesAnnotation)
+        .addAnnotation(Override.class)
+        .addModifiers(Modifier.PUBLIC)
+        .returns(Properties.class)
+        .addStatement("return new $T()", Properties.class);
+  }
+
+  /**
    * Create the {@link MethodSpec} builder for the {@link DataSource} bean.
    *
+   * @param beanNameFieldSpec                     the {@link FieldSpec} for this bean name constant
    * @param dataSourceClassPropertiesPrefix       the prefix of the properties of the data source
    *                                              class in application.properties
-   * @param beanNameFieldSpec                     the {@link FieldSpec} for the bean name constant
    * @param dataSourcePropertiesBeanNameFieldSpec the {@link FieldSpec} for the
    *                                              {@link DataSourceProperties} dependency bean name
    *                                              constant
    * @return the {@link MethodSpec} builder for the {@link DataSource} bean
    */
   private MethodSpec.Builder createDataSourceBeanMethod(
-      String dataSourceClassPropertiesPrefix,
       FieldSpec beanNameFieldSpec,
+      String dataSourceClassPropertiesPrefix,
       FieldSpec dataSourcePropertiesBeanNameFieldSpec
   ) {
     // Create the method annotations
@@ -320,32 +377,43 @@ public class MultiDataSourceConfigGenerator {
    * {@link EntityManagerFactory} will determine the {@link javax.persistence.EntityManager}
    * implementation to use based on the {@link DataSource} implementation for complex queries.
    *
-   * @param hibernateBeanContainerPropertyPath the path of where the property for the
-   *                                           {@link HibernatePropertiesCustomizer} is located in
-   *                                           application.properties
-   * @param dataSourceEntityPackagesFieldSpec  the packages to scan for entities for this entity
-   *                                           manager
-   * @param beanNamefieldSpec                  the {@link FieldSpec} for the bean name constant
-   * @param dataSourceBeanNameFieldSpec        the {@link FieldSpec} for the {@link DataSource}
-   *                                           dependency bean name constant
+   * @param beanNameFieldSpece                      the {@link FieldSpec} for this bean name
+   *                                                constant
+   * @param dataSourceEntityPackagesFieldSpec       the packages to scan for entities for this
+   *                                                entity manager
+   * @param overrideJpaPropertiesFieldSpec          the {@link FieldSpec} for the JPA properties to
+   *                                                override
+   * @param dataSourceBeanNameFieldSpec             the {@link FieldSpec} for the {@link DataSource}
+   *                                                dependency bean name constant
+   * @param hibernateBeanContainerPropertyFieldSpec the {@link FieldSpec} for the hibernate bean
+   *                                                container property constant
    * @return the {@link MethodSpec} builder for the {@link EntityManagerFactory} bean
    */
   private MethodSpec.Builder createEntityManagerFactoryBeanMethod(
-      String hibernateBeanContainerPropertyPath,
+      FieldSpec beanNameFieldSpece,
+      FieldSpec dataSourceBeanNameFieldSpec,
+      FieldSpec overrideJpaPropertiesFieldSpec,
       FieldSpec dataSourceEntityPackagesFieldSpec,
-      FieldSpec beanNamefieldSpec,
-      FieldSpec dataSourceBeanNameFieldSpec
+      FieldSpec hibernateBeanContainerPropertyFieldSpec
   ) {
     // Create the method annotations
-    final AnnotationSpec beanAnnotation = createBeanAnnotationFromFieldSpec(beanNamefieldSpec);
-    final AnnotationSpec qualifierAnnotation = AnnotationSpec.builder(Qualifier.class)
+    final AnnotationSpec beanAnnotation =
+        createBeanAnnotationFromFieldSpec(beanNameFieldSpece);
+    final AnnotationSpec datasourceQualifierAnnotation = AnnotationSpec.builder(Qualifier.class)
         .addMember(VALUE_FIELD_NAME_STRING, "$N", dataSourceBeanNameFieldSpec)
+        .build();
+    final AnnotationSpec jpaPropertiesFieldAnnotation = AnnotationSpec.builder(Qualifier.class)
+        .addMember(VALUE_FIELD_NAME_STRING, "$N", overrideJpaPropertiesFieldSpec)
         .build();
 
     // Create the method parameters
+    final ParameterSpec jpaPropertiesParameter = ParameterSpec // JPA properties dependency
+        .builder(Properties.class, "overrideJpaProperties")
+        .addAnnotation(jpaPropertiesFieldAnnotation)
+        .build();
     final ParameterSpec dataSourceParameter = ParameterSpec // DataSource dependency
         .builder(DataSource.class, "dataSource")
-        .addAnnotation(qualifierAnnotation)
+        .addAnnotation(datasourceQualifierAnnotation)
         .build();
     final ParameterSpec builderParameter = ParameterSpec // EntityManagerFactoryBuilder dependency
         .builder(EntityManagerFactoryBuilder.class, "builder")
@@ -360,9 +428,10 @@ public class MultiDataSourceConfigGenerator {
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
         .returns(LocalContainerEntityManagerFactoryBean.class)
+        .addParameter(jpaPropertiesParameter)
+        .addParameter(dataSourceParameter)
         .addParameter(builderParameter)
         .addParameter(beanFactoryParameter)
-        .addParameter(dataSourceParameter)
         .addStatement(
             "final $T emfb = builder.dataSource($N).packages($N).persistenceUnit($N).build()",
             LocalContainerEntityManagerFactoryBean.class,
@@ -372,18 +441,19 @@ public class MultiDataSourceConfigGenerator {
         )
         .addComment(ADD_THE_SPRING_BEAN_CONTAINER_TO_THE_HIBERNATE_PROPERTIES)
         .addStatement(
-            "emfb.getJpaPropertyMap().put($S, new $T($N))",
-            hibernateBeanContainerPropertyPath,
+            "emfb.getJpaPropertyMap().put($N, new $T($N))",
+            hibernateBeanContainerPropertyFieldSpec,
             SpringBeanContainer.class,
             beanFactoryParameter
         )
+        .addStatement("emfb.setJpaProperties($N)", jpaPropertiesParameter)
         .addStatement("return emfb");
   }
 
   /**
    * Create the {@link MethodSpec} builder for the {@link PlatformTransactionManager} bean.
    *
-   * @param beanNamefieldSpec                     the {@link FieldSpec} for the bean name constant
+   * @param beanNamefieldSpec                     the {@link FieldSpec} for this bean name constant
    * @param entityManagerFactoryBeanNameFieldSpec the {@link FieldSpec} for the
    *                                              {@link EntityManagerFactory} dependency bean
    * @return the {@link MethodSpec} builder for the {@link PlatformTransactionManager} bean
@@ -404,7 +474,7 @@ public class MultiDataSourceConfigGenerator {
 
     // Create the method parameters (EntityManagerFactory dependency)
     final ParameterSpec entityManagerFactoryParameter = ParameterSpec
-        .builder(EntityManagerFactory.class, "entityManagerFactory")
+        .builder(LocalContainerEntityManagerFactoryBean.class, "entityManagerFactoryBean")
         .addAnnotation(qualifierAnnotation)
         .build();
 
@@ -416,7 +486,7 @@ public class MultiDataSourceConfigGenerator {
         .returns(PlatformTransactionManager.class)
         .addParameter(entityManagerFactoryParameter)
         .addStatement(
-            "return new $T($N)",
+            "return new $T($N.getNativeEntityManagerFactory())",
             JpaTransactionManager.class,
             entityManagerFactoryParameter
         );
