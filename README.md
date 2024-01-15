@@ -154,8 +154,7 @@ intended to be used for generating code for configuring data sources during the 
       },
       primaryDataSourceConfig = @DataSourceConfig(
           dataSourceName = "master",
-          // Extra JPA Properties specific to this data source will be picked from this path in the
-          // application properties file.
+          // Extra JPA Properties specific to this data source provided under this key in example application properties below
           overridingPropertiesPath = "spring.datasource.master.extra-properties"
       ),
       secondaryDataSourceConfigs = {
