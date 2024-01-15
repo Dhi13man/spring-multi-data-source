@@ -2,8 +2,8 @@
 
 ## [0.2.1] - 10th December 2023
 
-- BREAKING CHANGE: Better Organise DataSourceConfig to segregate Primary and Secondary data sources
-  as per Spring Convention. Also renamed `@TargetDataSource` to `@TargetSecondaryDataSource` to\
+- BREAKING CHANGE: Better organised DataSourceConfig to segregate Primary and Secondary data sources
+  as per Spring Convention. Also renamed `@TargetDataSource` to `@TargetSecondaryDataSource` to
   avoid confusion.
 
   Before:
@@ -52,6 +52,10 @@
 
 - Adaptive `EntityManagerFactory` for `TransactionManager` will be generated based on
   `LocalContainerEntityManagerFactoryBean`. Decoupled from Javax/Jakarta implementations.
+
+- Allow possibility for overriding different JPA properties for each data source by adding
+  `@DataSourceConfig.overridingJpaPropertiesPath` field. By default, it will take the default
+  `spring.jpa.properties` path.
 
 ## [0.1.2] - 6th October 2023
 

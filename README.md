@@ -86,6 +86,8 @@ for configuring multi-data source configurations for a service. Let's break down
       naming format. If this is not specified, the generated repositories will be placed in the
       same package as the class where this annotation is applied, followed by
       `.generated.repositories` and then `.<data_source_name>`.
+    - `primaryDataSourceConfig`: A `@DataSourceConfig` annotation. This annotation represents
+      the primary data source and its configuration.
     - `dataSourceConfigs`: An array of `@DataSourceConfig` annotations. Each annotation represents
       a data source and its configuration.
 
@@ -99,15 +101,12 @@ for configuring multi-data source configurations for a service. Let's break down
     - `dataSourceName`: The name of the data source. It is used to generate the date source
       beans and to name the generated classes, packages, and property paths for the data
       source properties.
-    - `isPrimary`: Whether the data source is the primary data source. If this is set to
-      `true`, the generated beans for this data source will be annotated with `@Primary`. Hence
-      this should be set to `true` for only one data source.
-    - `dataSourceClassPropertiesPath`: The path of the data source class properties in the
+    - `dataSourceClassPropertiesPath`: The key/path of the data source class properties in the
       application properties. Eg. `spring.datasource.hikari` for Hikari data sources.
-    - `hibernateBeanContainerPropertyPath`: The path of the Hibernate bean container property in
-      the application properties. This is needed to manually set the hibernate bean container to
-      the spring bean container to ensure that the hibernate beans like attribute converters are
-      managed by spring.
+    - `overridingPropertiesPath`:  The key/path under which the JPA properties to override for this
+      data source are located in the application properties file. This allows overriding of the JPA
+      properties for each data source. By default, it will take the default `spring.jpa.properties`
+      path.
 
 ### @TargetSecondaryDataSource
 

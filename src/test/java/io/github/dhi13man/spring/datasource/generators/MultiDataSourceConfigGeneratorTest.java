@@ -8,6 +8,7 @@ import io.github.dhi13man.spring.datasource.generated.config.Replica2DataSourceC
 import io.github.dhi13man.spring.datasource.generated.config.ReplicaNoTargetDataSourceDataSourceConfig;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Assertions;
@@ -83,10 +84,14 @@ class MultiDataSourceConfigGeneratorTest {
       final DataSourceProperties dataSourceProperties = generatedConfig.dataSourceProperties();
       dataSourceProperties.setEmbeddedDatabaseConnection(EmbeddedDatabaseConnection.H2);
       dataSourceProperties.setType(SingleConnectionDataSource.class);
-
+      final Properties overrideJpaProperties = generatedConfig.overridingJpaProperties();
       final DataSource dataSource = generatedConfig.dataSource(dataSourceProperties);
-      final LocalContainerEntityManagerFactoryBean entityManagerFactory = generatedConfig
-          .entityManagerFactory(mockEntityManagerFactoryBuilder, mockBeanFactory, dataSource);
+      final LocalContainerEntityManagerFactoryBean entityManagerFactory = generatedConfig.entityManagerFactory(
+          overrideJpaProperties,
+          dataSource,
+          mockEntityManagerFactoryBuilder,
+          mockBeanFactory
+      );
 
       // Assert
       Assertions.assertNotNull(entityManagerFactory);

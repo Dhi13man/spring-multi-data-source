@@ -94,6 +94,7 @@ public class MultiDataSourceAnnotationProcessor extends AbstractProcessor {
    * @param filer               the filer to use for writing files
    * @param messager            the messager to use for printing messages
    * @param elementUtils        the element utils to use for getting packages
+   * @param typeUtils           the type utils to use for getting types
    * @param commonStringUtils   Utility class for common string operations
    * @param generatorUtils      Utility class for generating code for the Multi Data Source library
    * @param configGenerator     the Multi Data Source config generator

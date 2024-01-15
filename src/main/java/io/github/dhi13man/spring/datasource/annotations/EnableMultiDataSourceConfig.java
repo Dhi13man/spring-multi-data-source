@@ -113,20 +113,21 @@ public @interface EnableMultiDataSourceConfig {
     String dataSourceName() default "";
 
     /**
-     * The key of the data source class properties in the application properties file.
+     * The key/path of the data source class properties in the application properties file.
      *
      * @return the prefix of the data source class properties in the application properties file.
      */
     String dataSourceClassPropertiesPath() default "spring.datasource.hikari";
 
     /**
-     * The path of the hibernate bean container property in the application properties.
+     * The key/path under which the JPA properties to override are located in the application
+     * properties file.
      * <p>
-     * This is needed to manually set the hibernate bean container to the spring bean container to
-     * ensure that the hibernate beans like attribute converters are managed by spring.
+     * This allows overriding of the JPA properties for each data source. The properties under this
+     * key will be merged with the usual properties under the spring.jpa.properties key.
      *
-     * @return the prefix of the hibernate bean container properties in the application properties
+     * @return the key under which the JPA properties to override are located.
      */
-    String hibernateBeanContainerPropertyPath() default "hibernate.resource.beans.container";
+    String overridingJpaPropertiesPath() default "spring.jpa.properties";
   }
 }

@@ -5,6 +5,7 @@
 
 package io.github.dhi13man.spring.datasource.config;
 
+import java.util.Properties;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -25,6 +26,16 @@ public interface IMultiDataSourceConfig {
   DataSourceProperties dataSourceProperties();
 
   /**
+   * Get the JPA properties to override for the data source to be used.
+   * <p>
+   * This allows overriding of the JPA properties for each data source. These properties will be
+   * merged with the usual properties under the spring.jpa.properties key.
+   *
+   * @return The JPA properties.
+   */
+  Properties overridingJpaProperties();
+
+  /**
    * Get the {@link DataSource} instance for the data source to be used.
    * <p>
    * This is instantiated using the data source properties.
@@ -37,15 +48,19 @@ public interface IMultiDataSourceConfig {
   /**
    * Get the entity manager factory to be used to interface with the data source.
    *
-   * @param builder     The entity manager factory builder, used to build the entity manager
-   * @param beanFactory The bean factory, used to create the entity manager factory bean
-   * @param dataSource  The data source, used to create the entity manager factory bean
+   * @param builder               The entity manager factory builder, used to build the entity
+   *                              manager
+   * @param beanFactory           The bean factory, used to create the entity manager factory bean
+   * @param dataSource            The data source, used to create the entity manager factory bean
+   * @param overrideJpaProperties The JPA properties, used to create the entity manager factory
+   *                              bean
    * @return The entity manager factory bean.
    */
   LocalContainerEntityManagerFactoryBean entityManagerFactory(
+      Properties overrideJpaProperties,
+      DataSource dataSource,
       EntityManagerFactoryBuilder builder,
-      ConfigurableListableBeanFactory beanFactory,
-      DataSource dataSource
+      ConfigurableListableBeanFactory beanFactory
   );
 
   /**
