@@ -152,7 +152,11 @@ intended to be used for generating code for configuring data sources during the 
       exactEntityPackages = {
         "com.sample.project.sample_service.entities.mysql"
       },
-      primaryDataSourceConfig = @DataSourceConfig(dataSourceName = "master"),
+      primaryDataSourceConfig = @DataSourceConfig(
+          dataSourceName = "master",
+          // In example application properties below (Usage Step 7), extra JPA Properties specific to this data source are provided under this key
+          overridingPropertiesPath = "spring.datasource.master.extra-properties"
+      ),
       secondaryDataSourceConfigs = {
           @DataSourceConfig(dataSourceName = "replica-2"),
           @DataSourceConfig(dataSourceName = "read-replica")
@@ -218,12 +222,18 @@ intended to be used for generating code for configuring data sources during the 
         username: ${DB_USERNAME}
         password: ${DB_PASSWORD}
         type: com.zaxxer.hikari.HikariDataSource
-      read-replica: # This will become the kebab case of the data source name
+        extra-properties:  # Made possible by overridingPropertiesPath in Step 2 for master data source.
+          hibernate.generate_statistics: true  # Generate hibernate statistics only for master data source.
+      read-replica:  # This will become the property for the kebab case of the secondary data source name
         driver-class-name: com.mysql.cj.jdbc.Driver
         url: jdbc:mysql://${READ_REPLICA_DB_IP}:${DB_PORT}/${READ_REPLICA_DB_NAME}
         username: ${DB_USERNAME}
         password: ${DB_PASSWORD}
         type: com.zaxxer.hikari.HikariDataSource
+    jpa:
+      # Global JPA Properties
+      properties: 
+        hibernate.generate_statistics: false
    ```
 
 8. Please always go through the generated code to learn more about what configs to give and what
