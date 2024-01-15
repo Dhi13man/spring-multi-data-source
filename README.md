@@ -90,8 +90,9 @@ for configuring multi-data source configurations for a service. Let's break down
       the primary data source and its configuration. The primary data source will be able
       to access every repository other than the repositories generated for the secondary data
       sources.
-    - `dataSourceConfigs`: An array of `@DataSourceConfig` annotations. Each annotation represents
-      a data source and its configuration.
+    - `secondaryDataSourceConfigs`: An array of `@DataSourceConfig` annotations. Each annotation
+      represents a data source and its configuration. The secondary data sources will only be able
+      to access the repositories generated for them.
 
 #### @EnableMultiDataSourceConfig.DataSourceConfig
 
