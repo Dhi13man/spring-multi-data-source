@@ -154,7 +154,7 @@ intended to be used for generating code for configuring data sources during the 
       },
       primaryDataSourceConfig = @DataSourceConfig(
           dataSourceName = "master",
-          // Extra JPA Properties specific to this data source provided under this key in example application properties below
+          // In example application properties below (Usage Step 7), extra JPA Properties specific to this data source are provided under this key
           overridingPropertiesPath = "spring.datasource.master.extra-properties"
       ),
       secondaryDataSourceConfigs = {
@@ -222,7 +222,7 @@ intended to be used for generating code for configuring data sources during the 
         username: ${DB_USERNAME}
         password: ${DB_PASSWORD}
         type: com.zaxxer.hikari.HikariDataSource
-        extra-properties:
+        extra-properties:  # Made possible by overridingPropertiesPath in Step 2 for master data source.
           hibernate.generate_statistics: true  # Generate hibernate statistics only for master data source.
       read-replica:  # This will become the property for the kebab case of the secondary data source name
         driver-class-name: com.mysql.cj.jdbc.Driver
