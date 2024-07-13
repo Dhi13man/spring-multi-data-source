@@ -8,15 +8,19 @@ import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceCon
  * Created to enable generation of the Multi Data Source classes for testing.
  */
 @EnableMultiDataSourceConfig(
-    exactEntityPackages = "java.lang", // Object is entity
     repositoryPackages = "io.github.dhi13man.spring.datasource.generators", // MockRepository is repository
     generatedConfigPackage = "io.github.dhi13man.spring.datasource.generated.config",
-    generatedRepositoryPackagePrefix = "io.github.dhi13man.spring.datasource.generated.repositories",
-    primaryDataSourceConfig = @DataSourceConfig(dataSourceName = "master"),
+    primaryDataSourceConfig = @DataSourceConfig(
+        dataSourceName = "master",
+        exactEntityPackages = "java.lang"
+    ),
     secondaryDataSourceConfigs = {
-        @DataSourceConfig(dataSourceName = "replica-2"),
-        @DataSourceConfig(dataSourceName = "read-replica"),
-        @DataSourceConfig(dataSourceName = "replica-no-target-data-source"),
+        @DataSourceConfig(dataSourceName = "replica-2", exactEntityPackages = "java.lang"),
+        @DataSourceConfig(dataSourceName = "read-replica", exactEntityPackages = "java.lang"),
+        @DataSourceConfig(
+            dataSourceName = "replica-no-target-data-source",
+            exactEntityPackages = "java.lang"
+        ),
     }
 )
 public class MultiDataSourceTestConfig {

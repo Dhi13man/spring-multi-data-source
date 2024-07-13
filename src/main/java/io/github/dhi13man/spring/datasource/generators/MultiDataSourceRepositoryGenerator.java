@@ -10,6 +10,7 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
 import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSources;
+import io.github.dhi13man.spring.datasource.config.IGeneratedDataSourceRepository;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nonnull;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -39,19 +41,19 @@ public class MultiDataSourceRepositoryGenerator {
 
   private static final String REPOSITORY_BEAN_NAME = "REPOSITORY_BEAN_NAME";
 
-  private final Messager messager;
+  private final @Nonnull Messager messager;
 
-  private final Types typeUtils;
+  private final @Nonnull Types typeUtils;
 
-  private final MultiDataSourceCommonStringUtils multiDataSourceCommonStringUtils;
+  private final @Nonnull MultiDataSourceCommonStringUtils multiDataSourceCommonStringUtils;
 
-  private final MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils;
+  private final @Nonnull MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils;
 
   public MultiDataSourceRepositoryGenerator(
-      Messager messager,
-      Types typeUtils,
-      MultiDataSourceCommonStringUtils multiDataSourceCommonStringUtils,
-      MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils
+      @Nonnull Messager messager,
+      @Nonnull Types typeUtils,
+      @Nonnull MultiDataSourceCommonStringUtils multiDataSourceCommonStringUtils,
+      @Nonnull MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils
   ) {
     this.messager = messager;
     this.typeUtils = typeUtils;
@@ -73,10 +75,10 @@ public class MultiDataSourceRepositoryGenerator {
    * @param dataSourceName the name of the data source the generated interface is for
    * @return the {@link TypeSpec} for a generated Spring Repository interface with annotated methods
    */
-  public TypeSpec generateRepositoryTypeElementWithAnnotatedMethods(
-      TypeElement typeElement,
-      Set<ExecutableElement> methods,
-      String dataSourceName
+  public @Nonnull TypeSpec generateRepositoryTypeElementWithAnnotatedMethods(
+      @Nonnull TypeElement typeElement,
+      @Nonnull Set<ExecutableElement> methods,
+      @Nonnull String dataSourceName
   ) {
     // Generate the class/interface definition
     final String generatedTypename = multiDataSourceCommonStringUtils.toPascalCase(dataSourceName)
@@ -111,9 +113,11 @@ public class MultiDataSourceRepositoryGenerator {
     for (final TypeMirror typeMirror : typeElement.getInterfaces()) {
       builder.addSuperinterface(typeMirror);
       // Override and disable all method signatures from the superclass
-      superMethods
-          .addAll(generateOverridenAndDisabledSuperMethods(methods, (DeclaredType) typeMirror));
+      final Set<MethodSpec> methodsToAdd = this
+          .generateOverridenAndDisabledSuperMethods(methods, (DeclaredType) typeMirror);
+      superMethods.addAll(methodsToAdd);
     }
+    builder.addSuperinterface(IGeneratedDataSourceRepository.class);
 
     // Create all necessary methods to be copied to the generated class
     final List<MethodSpec> methodSpecs = methods.stream()
@@ -145,7 +149,9 @@ public class MultiDataSourceRepositoryGenerator {
    * @param parameter the {@link VariableElement} to convert
    * @return the {@link ParameterSpec} for the given {@link VariableElement}
    */
-  private ParameterSpec convertParameterVariableElementToParameterSpec(VariableElement parameter) {
+  private @Nonnull ParameterSpec convertParameterVariableElementToParameterSpec(
+      @Nonnull VariableElement parameter
+  ) {
     // Copy all annotations
     final List<AnnotationSpec> annotationSpecs = parameter.getAnnotationMirrors().stream()
         .map(AnnotationSpec::get)
@@ -167,13 +173,13 @@ public class MultiDataSourceRepositoryGenerator {
    *                         class) to override and disable methods from
    * @return the {@link MethodSpec}s for all overridden and disabled methods
    */
-  private Set<MethodSpec> generateOverridenAndDisabledSuperMethods(
-      Set<ExecutableElement> annotatedMethods,
-      DeclaredType declaredType
+  private @Nonnull Set<MethodSpec> generateOverridenAndDisabledSuperMethods(
+      @Nonnull Set<ExecutableElement> annotatedMethods,
+      @Nonnull DeclaredType declaredType
   ) {
     final TypeElement superTypeElement = (TypeElement) declaredType.asElement();
-    final Map<TypeName, TypeName> baseTypeNameToDerived =
-        getBaseTypeNameToDerived(declaredType, superTypeElement);
+    final Map<TypeName, TypeName> baseTypeNameToDerived = this
+        .getBaseTypeNameToDerived(declaredType, superTypeElement);
     final List<ExecutableElement> superMethods = ElementFilter
         .methodsIn(superTypeElement.getEnclosedElements());
 
@@ -182,17 +188,16 @@ public class MultiDataSourceRepositoryGenerator {
       final boolean shouldExcludeMethod = superMethod.getModifiers().contains(Modifier.PRIVATE)
           || superMethod.getModifiers().contains(Modifier.FINAL)
           || annotatedMethods.stream().anyMatch(
-          method -> isMethodSignatureMatching(superMethod, method, baseTypeNameToDerived)
+          method -> this.isMethodSignatureMatching(superMethod, method, baseTypeNameToDerived)
       );
       if (shouldExcludeMethod) {
         continue;
       }
 
-      final MethodSpec methodSpec = convertExecutableMethodElementToMethodSpec(superMethod);
-      final MethodSpec.Builder typeReplacedSpecBuilder = replaceAllBaseMethodTypesWithDerivedTypes(
-          methodSpec,
-          baseTypeNameToDerived
-      ).toBuilder();
+      final MethodSpec methodSpec = this.convertExecutableMethodElementToMethodSpec(superMethod);
+      final MethodSpec.Builder typeReplacedSpecBuilder = this
+          .replaceAllBaseMethodTypesWithDerivedTypes(methodSpec, baseTypeNameToDerived)
+          .toBuilder();
       typeReplacedSpecBuilder.modifiers.remove(Modifier.ABSTRACT);
       final MethodSpec disabledSpec = typeReplacedSpecBuilder
           .addModifiers(Modifier.DEFAULT)
@@ -215,9 +220,9 @@ public class MultiDataSourceRepositoryGenerator {
    * @return true if the method signatures are matching, false otherwise
    */
   private boolean isMethodSignatureMatching(
-      ExecutableElement executableElement1,
-      ExecutableElement executableElement2,
-      Map<TypeName, TypeName> baseTypeNameToDerived
+      @Nonnull ExecutableElement executableElement1,
+      @Nonnull ExecutableElement executableElement2,
+      @Nonnull Map<TypeName, TypeName> baseTypeNameToDerived
   ) {
     // Name check
     if (!executableElement2.getSimpleName().equals(executableElement1.getSimpleName())) {
@@ -256,7 +261,9 @@ public class MultiDataSourceRepositoryGenerator {
    * @param method the {@link ExecutableElement} to convert
    * @return the {@link MethodSpec} for the given {@link ExecutableElement}
    */
-  private MethodSpec convertExecutableMethodElementToMethodSpec(ExecutableElement method) {
+  private @Nonnull MethodSpec convertExecutableMethodElementToMethodSpec(
+      @Nonnull ExecutableElement method
+  ) {
     // Copy all annotations other than the ones used to mark the method as a repository method
     // (i.e. @TargetSecondaryDataSources and @TargetSecondaryDataSource)
     final List<AnnotationSpec> annotationsToSpec = method.getAnnotationMirrors().stream()
@@ -299,9 +306,9 @@ public class MultiDataSourceRepositoryGenerator {
    * @param typeElement  the {@link TypeElement} of the superclass (must be an interface or class)
    * @return a map of the base type names to the derived type names
    */
-  private Map<TypeName, TypeName> getBaseTypeNameToDerived(
-      DeclaredType declaredType,
-      TypeElement typeElement
+  private @Nonnull Map<TypeName, TypeName> getBaseTypeNameToDerived(
+      @Nonnull DeclaredType declaredType,
+      @Nonnull TypeElement typeElement
   ) {
     final List<TypeName> baseTypeNames = typeElement.getTypeParameters()
         .stream()
@@ -326,9 +333,9 @@ public class MultiDataSourceRepositoryGenerator {
    *                              {@link #getBaseTypeNameToDerived(DeclaredType, TypeElement)})
    * @return the {@link MethodSpec} with all base type names replaced with derived type names
    */
-  private MethodSpec replaceAllBaseMethodTypesWithDerivedTypes(
-      MethodSpec methodSpec,
-      Map<TypeName, TypeName> baseTypeNameToDerived
+  private @Nonnull MethodSpec replaceAllBaseMethodTypesWithDerivedTypes(
+      @Nonnull MethodSpec methodSpec,
+      @Nonnull Map<TypeName, TypeName> baseTypeNameToDerived
   ) {
     final MethodSpec.Builder builder = MethodSpec.methodBuilder(methodSpec.name)
         .addModifiers(methodSpec.modifiers)
@@ -381,7 +388,6 @@ public class MultiDataSourceRepositoryGenerator {
     return builder.build();
   }
 
-
   /**
    * Recursively convert the given base {@link TypeName} to the derived {@link TypeName} using the
    * given {@code typeNameMap}.
@@ -392,20 +398,23 @@ public class MultiDataSourceRepositoryGenerator {
    * @param typeNameMap the map of base {@link TypeName} to derived {@link TypeName}
    * @return the derived {@link TypeName}
    */
-  private TypeName recursivelyConvertType(TypeName input, Map<TypeName, TypeName> typeNameMap) {
-    // If the return type is a parameterised type, replace all type arguments
-    if (input instanceof ParameterizedTypeName) {
-      final ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) input;
-      final List<TypeName> typeArguments = parameterizedTypeName.typeArguments;
-      final TypeName[] convertedTypeNames = typeArguments.stream()
-          .map(typeName -> recursivelyConvertType(typeName, typeNameMap))
-          .toArray(TypeName[]::new);
-      return ParameterizedTypeName.get(
-          parameterizedTypeName.rawType,
-          convertedTypeNames
-      );
+  private @Nonnull TypeName recursivelyConvertType(
+      @Nonnull TypeName input,
+      @Nonnull Map<TypeName, TypeName> typeNameMap
+  ) {
+    if (!(input instanceof ParameterizedTypeName)) {
+      return typeNameMap.getOrDefault(input, input);
     }
 
-    return typeNameMap.getOrDefault(input, input);
+    // If the return type is a parameterised type, replace all type arguments
+    final ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) input;
+    final List<TypeName> typeArguments = parameterizedTypeName.typeArguments;
+    final TypeName[] convertedTypeNames = typeArguments.stream()
+        .map(typeName -> recursivelyConvertType(typeName, typeNameMap))
+        .toArray(TypeName[]::new);
+    return ParameterizedTypeName.get(
+        parameterizedTypeName.rawType,
+        convertedTypeNames
+    );
   }
 }

@@ -1,6 +1,8 @@
 package io.github.dhi13man.spring.datasource.generators;
 
 
+import static io.github.dhi13man.spring.datasource.processor.TargetDataSourceAnnotationProcessor.GENERATED_REPOSITORIES_PACKAGE_SUFFIX;
+
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -8,9 +10,12 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import io.github.dhi13man.spring.datasource.annotations.EnableMultiDataSourceConfig.DataSourceConfig;
 import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
+import io.github.dhi13man.spring.datasource.config.IGeneratedDataSourceRepository;
 import io.github.dhi13man.spring.datasource.config.IMultiDataSourceConfig;
+import io.github.dhi13man.spring.datasource.utils.MultiDataSourceCommonStringUtils;
 import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import java.util.Properties;
+import javax.annotation.Nonnull;
 import javax.lang.model.element.Modifier;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
@@ -20,7 +25,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Primary;
@@ -65,12 +70,18 @@ public class MultiDataSourceConfigGenerator {
 
   private static final String HIBERNATE_BEAN_CONTAINER_PROPERTY_PATH = "hibernate.resource.beans.container";
 
-  private final MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils;
+  private static final String REGEX_ALL_MATCH = ".*";
+
+  private final @Nonnull MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils;
+
+  private final @Nonnull MultiDataSourceCommonStringUtils commonStringUtils;
 
   public MultiDataSourceConfigGenerator(
-      MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils
+      @Nonnull MultiDataSourceGeneratorUtils multiDataSourceGeneratorUtils,
+      @Nonnull MultiDataSourceCommonStringUtils commonStringUtils
   ) {
     this.multiDataSourceGeneratorUtils = multiDataSourceGeneratorUtils;
+    this.commonStringUtils = commonStringUtils;
   }
 
   /**
@@ -91,21 +102,17 @@ public class MultiDataSourceConfigGenerator {
    * @param repositoryPackagesToInclude the packages where the repositories associated with the data
    *                                    source are located (to be included in the
    *                                    {@link EnableJpaRepositories} annotation)
-   * @param repositoryPackagesToExclude the packages where the repositories associated with other
-   *                                    data sources are located (to be excluded in the
-   *                                    {@link EnableJpaRepositories} annotation)
    * @param dataSourceEntityPackages    the exact packages where the entities associated with the
    *                                    data source are located
    * @return the {@link TypeSpec} for a data source Spring Configuration class
    */
-  public TypeSpec generateMultiDataSourceConfigTypeElement(
-      DataSourceConfig dataSourceConfig,
+  public @Nonnull TypeSpec generateMultiDataSourceConfigTypeElement(
+      @Nonnull DataSourceConfig dataSourceConfig,
       boolean isPrimaryConfig,
-      String dataSourceConfigClassName,
-      String dataSourcePropertiesPath,
-      String[] repositoryPackagesToInclude,
-      String[] repositoryPackagesToExclude,
-      String[] dataSourceEntityPackages
+      @Nonnull String dataSourceConfigClassName,
+      @Nonnull String dataSourcePropertiesPath,
+      @Nonnull String[] repositoryPackagesToInclude,
+      @Nonnull String[] dataSourceEntityPackages
   ) {
     // Constants exposing important bean names
     final FieldSpec dataSourcePropertiesBeanNameField = multiDataSourceGeneratorUtils.createConstantStringFieldSpec(
@@ -138,6 +145,118 @@ public class MultiDataSourceConfigGenerator {
     );
 
     // Create the config class level annotations
+    final AnnotationSpec enableJpaRepositoriesAnnotation = this.generateEnableJpaRepositoriesAnnotation(
+        isPrimaryConfig,
+        dataSourceConfig.dataSourceName(),
+        dataSourceConfigClassName,
+        repositoryPackagesToInclude,
+        entityManagerFactoryBeanNameField,
+        transactionManagerBeanNameField
+    );
+
+    // Create the config class bean creation methods while adding the primary annotation to the
+    // DataSourceProperties bean
+    final MethodSpec dataSourcePropertiesMethod = this.addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        isPrimaryConfig,
+        this.createDataSourcePropertiesBeanMethod(
+            dataSourcePropertiesBeanNameField,
+            dataSourcePropertiesPath
+        )
+    );
+
+    // Overriding JPA Properties bean
+    final MethodSpec overridingJpaPropertiesMethod = this.addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        isPrimaryConfig,
+        this.createOverridingJpaPropertiesBeanMethod(
+            overrideJpaPropertiesBeanNameField,
+            dataSourceConfig.overridingJpaPropertiesPath()
+        )
+    );
+
+    // DataSource bean
+    final MethodSpec dataSourceMethod = this.addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        isPrimaryConfig,
+        this.createDataSourceBeanMethod(
+            dataSourceBeanNameField,
+            dataSourceConfig.dataSourceClassPropertiesPath(),
+            dataSourcePropertiesBeanNameField
+        )
+    );
+
+    // EntityManagerFactory bean
+    final MethodSpec entityManagerFactoryMethod = this.addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        isPrimaryConfig,
+        this.createEntityManagerFactoryBeanMethod(
+            entityManagerFactoryBeanNameField,
+            dataSourceBeanNameField,
+            overrideJpaPropertiesBeanNameField,
+            dataSourceEntityPackageField,
+            hibernateBeanContainerPropertyField
+        )
+    );
+
+    // TransactionManager bean
+    final MethodSpec transactionManagerMethod = this.addPrimaryAnnotationIfPrimaryConfigAndBuild(
+        isPrimaryConfig,
+        this.createTransactionManagerBeanMethod(
+            transactionManagerBeanNameField,
+            entityManagerFactoryBeanNameField
+        )
+    );
+
+    // Create the config class
+    return TypeSpec.classBuilder(dataSourceConfigClassName)
+        .addSuperinterface(IMultiDataSourceConfig.class)
+        .addAnnotation(Configuration.class)
+        .addAnnotation(enableJpaRepositoriesAnnotation)
+        .addModifiers(Modifier.PUBLIC)
+        .addField(dataSourcePropertiesBeanNameField)
+        .addField(overrideJpaPropertiesBeanNameField)
+        .addField(dataSourceBeanNameField)
+        .addField(entityManagerFactoryBeanNameField)
+        .addField(transactionManagerBeanNameField)
+        .addField(dataSourceEntityPackageField)
+        .addField(hibernateBeanContainerPropertyField)
+        .addMethod(dataSourcePropertiesMethod)
+        .addMethod(overridingJpaPropertiesMethod)
+        .addMethod(dataSourceMethod)
+        .addMethod(entityManagerFactoryMethod)
+        .addMethod(transactionManagerMethod)
+        .build();
+  }
+
+  /**
+   * Generate the {@link AnnotationSpec} for the {@link EnableJpaRepositories} annotation for the
+   * data source configuration class.
+   *
+   * @param isPrimaryConfig                   whether the data source config is for the primary data
+   *                                          source
+   * @param dataSourceName                    the name of the data source
+   * @param dataSourceConfigClassName         the name of the data source configuration class to
+   *                                          generate
+   * @param repositoryPackagesToInclude       the packages where the repositories associated with
+   *                                          the data source are located (to be included in the
+   *                                          {@link EnableJpaRepositories} annotation)
+   * @param entityManagerFactoryBeanNameField the {@link FieldSpec} for the
+   *                                          {@link EntityManagerFactory} bean name constant. This
+   *                                          is used to reference the {@link EntityManagerFactory}
+   *                                          bean in the {@link EnableJpaRepositories} annotation
+   * @param transactionManagerBeanNameField   the {@link FieldSpec} for the
+   *                                          {@link PlatformTransactionManager} bean name constant.
+   *                                          This is used to reference the
+   *                                          {@link PlatformTransactionManager} bean in the
+   *                                          {@link EnableJpaRepositories} annotation
+   * @return the {@link AnnotationSpec} for the {@link EnableJpaRepositories} annotation for the
+   * data source configuration class with the relevant parameters
+   */
+  private @Nonnull AnnotationSpec generateEnableJpaRepositoriesAnnotation(
+      boolean isPrimaryConfig,
+      @Nonnull String dataSourceName,
+      @Nonnull String dataSourceConfigClassName,
+      @Nonnull String[] repositoryPackagesToInclude,
+      @Nonnull FieldSpec entityManagerFactoryBeanNameField,
+      @Nonnull FieldSpec transactionManagerBeanNameField
+  ) {
     final AnnotationSpec.Builder enableJpaRepositoriesAnnotationBuilder = AnnotationSpec
         .builder(EnableJpaRepositories.class)
         .addMember(
@@ -157,91 +276,31 @@ public class MultiDataSourceConfigGenerator {
             dataSourceConfigClassName,
             transactionManagerBeanNameField
         );
-    // Exclude the other data source repositories from the scan
-    if (repositoryPackagesToExclude.length > 0) {
-      enableJpaRepositoriesAnnotationBuilder.addMember(
-          "excludeFilters",
-          "$L",
-          AnnotationSpec.builder(ComponentScan.Filter.class)
-              .addMember("type", "$T.REGEX", FilterType.class)
-              .addMember(
-                  "pattern",
-                  "$L",
-                  stringArrayToGeneratedStringArray(repositoryPackagesToExclude)
-              )
-              .build()
-      );
+    final AnnotationSpec generatedRepositoryFilter = AnnotationSpec.builder(Filter.class)
+        .addMember("type", "$T.ASSIGNABLE_TYPE", FilterType.class)
+        .addMember(
+            "classes",
+            "$T.class",
+            IGeneratedDataSourceRepository.class
+        )
+        .build();
+    // If this is the primary data source, exclude the generated repositories from the scan
+    if (isPrimaryConfig) {
+      enableJpaRepositoriesAnnotationBuilder
+          .addMember("excludeFilters", "$L", generatedRepositoryFilter);
+      return enableJpaRepositoriesAnnotationBuilder.build();
     }
 
-    // Create the config class bean creation methods while adding the primary annotation to the
-    // DataSourceProperties bean
-    final MethodSpec dataSourcePropertiesMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
-        createDataSourcePropertiesBeanMethod(
-            dataSourcePropertiesBeanNameField,
-            dataSourcePropertiesPath
-        ),
-        isPrimaryConfig
-    );
-
-    // Overriding JPA Properties bean
-    final MethodSpec overridingJpaPropertiesMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
-        createOverridingJpaPropertiesBeanMethod(
-            overrideJpaPropertiesBeanNameField,
-            dataSourceConfig.overridingJpaPropertiesPath()
-        ),
-        isPrimaryConfig
-    );
-
-    // DataSource bean
-    final MethodSpec dataSourceMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
-        createDataSourceBeanMethod(
-            dataSourceBeanNameField,
-            dataSourceConfig.dataSourceClassPropertiesPath(),
-            dataSourcePropertiesBeanNameField
-        ),
-        isPrimaryConfig
-    );
-
-    // EntityManagerFactory bean
-    final MethodSpec entityManagerFactoryMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
-        createEntityManagerFactoryBeanMethod(
-            entityManagerFactoryBeanNameField,
-            dataSourceBeanNameField,
-            overrideJpaPropertiesBeanNameField,
-            dataSourceEntityPackageField,
-            hibernateBeanContainerPropertyField
-        ),
-        isPrimaryConfig
-    );
-
-    // TransactionManager bean
-    final MethodSpec transactionManagerMethod = addPrimaryAnnotationIfPrimaryConfigAndBuild(
-        createTransactionManagerBeanMethod(
-            transactionManagerBeanNameField,
-            entityManagerFactoryBeanNameField
-        ),
-        isPrimaryConfig
-    );
-
-    // Create the config class
-    return TypeSpec.classBuilder(dataSourceConfigClassName)
-        .addSuperinterface(IMultiDataSourceConfig.class)
-        .addAnnotation(Configuration.class)
-        .addAnnotation(enableJpaRepositoriesAnnotationBuilder.build())
-        .addModifiers(Modifier.PUBLIC)
-        .addField(dataSourcePropertiesBeanNameField)
-        .addField(overrideJpaPropertiesBeanNameField)
-        .addField(dataSourceBeanNameField)
-        .addField(entityManagerFactoryBeanNameField)
-        .addField(transactionManagerBeanNameField)
-        .addField(dataSourceEntityPackageField)
-        .addField(hibernateBeanContainerPropertyField)
-        .addMethod(dataSourcePropertiesMethod)
-        .addMethod(overridingJpaPropertiesMethod)
-        .addMethod(dataSourceMethod)
-        .addMethod(entityManagerFactoryMethod)
-        .addMethod(transactionManagerMethod)
+    // If this is a secondary data source, include the generated repositories in the scan
+    final AnnotationSpec regexFilter = AnnotationSpec.builder(Filter.class)
+        .addMember("type", "$T.REGEX", FilterType.class)
+        .addMember("pattern", "$S", REGEX_ALL_MATCH + GENERATED_REPOSITORIES_PACKAGE_SUFFIX + "."
+            + commonStringUtils.toSnakeCase(dataSourceName))
         .build();
+    enableJpaRepositoriesAnnotationBuilder
+        .addMember("includeFilters", "$L", generatedRepositoryFilter)
+        .addMember("includeFilters", "$L", regexFilter);
+    return enableJpaRepositoriesAnnotationBuilder.build();
   }
 
   /**
@@ -249,17 +308,17 @@ public class MultiDataSourceConfigGenerator {
    * {@link Primary} annotation to the {@link MethodSpec.Builder} if the data source config is for
    * the primary data source.
    *
+   * @param isPrimaryConfig   whether the data source config is for the primary data source
    * @param methodSpecBuilder the {@link MethodSpec.Builder} to add the {@link Primary} annotation
    *                          to if eligible
-   * @param isMasterConfig    whether the data source config is for the primary data source
    * @return the {@link MethodSpec} built with the {@link Primary} annotation added if eligible
    */
-  private MethodSpec addPrimaryAnnotationIfPrimaryConfigAndBuild(
-      MethodSpec.Builder methodSpecBuilder,
-      boolean isMasterConfig
+  private @Nonnull MethodSpec addPrimaryAnnotationIfPrimaryConfigAndBuild(
+      boolean isPrimaryConfig,
+      @Nonnull MethodSpec.Builder methodSpecBuilder
   ) {
     final AnnotationSpec primaryAnnotation = AnnotationSpec.builder(Primary.class).build();
-    if (isMasterConfig) {
+    if (isPrimaryConfig) {
       methodSpecBuilder.addAnnotation(primaryAnnotation);
     }
 
@@ -274,9 +333,9 @@ public class MultiDataSourceConfigGenerator {
    *                                 in application.properties
    * @return the {@link MethodSpec} builder for the {@link DataSourceProperties} bean
    */
-  private MethodSpec.Builder createDataSourcePropertiesBeanMethod(
-      FieldSpec beanNameFieldSpec,
-      String datasourcePropertiesPath
+  private @Nonnull MethodSpec.Builder createDataSourcePropertiesBeanMethod(
+      @Nonnull FieldSpec beanNameFieldSpec,
+      @Nonnull String datasourcePropertiesPath
   ) {
     // Create the method annotations
     final AnnotationSpec beanAnnotation = createBeanAnnotationFromFieldSpec(beanNameFieldSpec);
@@ -304,9 +363,9 @@ public class MultiDataSourceConfigGenerator {
    *                                    located in the application properties file.
    * @return the {@link MethodSpec} builder for the {@link DataSourceProperties} bean
    */
-  private MethodSpec.Builder createOverridingJpaPropertiesBeanMethod(
-      FieldSpec beanNameFieldSpec,
-      String overridingJpaPropertiesPath
+  private @Nonnull MethodSpec.Builder createOverridingJpaPropertiesBeanMethod(
+      @Nonnull FieldSpec beanNameFieldSpec,
+      @Nonnull String overridingJpaPropertiesPath
   ) {
     // Create the method annotations
     final AnnotationSpec beanAnnotation = createBeanAnnotationFromFieldSpec(beanNameFieldSpec);
@@ -336,10 +395,10 @@ public class MultiDataSourceConfigGenerator {
    *                                              constant
    * @return the {@link MethodSpec} builder for the {@link DataSource} bean
    */
-  private MethodSpec.Builder createDataSourceBeanMethod(
-      FieldSpec beanNameFieldSpec,
-      String dataSourceClassPropertiesPrefix,
-      FieldSpec dataSourcePropertiesBeanNameFieldSpec
+  private @Nonnull MethodSpec.Builder createDataSourceBeanMethod(
+      @Nonnull FieldSpec beanNameFieldSpec,
+      @Nonnull String dataSourceClassPropertiesPrefix,
+      @Nonnull FieldSpec dataSourcePropertiesBeanNameFieldSpec
   ) {
     // Create the method annotations
     final AnnotationSpec beanAnnotation = createBeanAnnotationFromFieldSpec(beanNameFieldSpec);
@@ -389,12 +448,12 @@ public class MultiDataSourceConfigGenerator {
    *                                                container property constant
    * @return the {@link MethodSpec} builder for the {@link EntityManagerFactory} bean
    */
-  private MethodSpec.Builder createEntityManagerFactoryBeanMethod(
-      FieldSpec beanNameFieldSpece,
-      FieldSpec dataSourceBeanNameFieldSpec,
-      FieldSpec overrideJpaPropertiesFieldSpec,
-      FieldSpec dataSourceEntityPackagesFieldSpec,
-      FieldSpec hibernateBeanContainerPropertyFieldSpec
+  private @Nonnull MethodSpec.Builder createEntityManagerFactoryBeanMethod(
+      @Nonnull FieldSpec beanNameFieldSpece,
+      @Nonnull FieldSpec dataSourceBeanNameFieldSpec,
+      @Nonnull FieldSpec overrideJpaPropertiesFieldSpec,
+      @Nonnull FieldSpec dataSourceEntityPackagesFieldSpec,
+      @Nonnull FieldSpec hibernateBeanContainerPropertyFieldSpec
   ) {
     // Create the method annotations
     final AnnotationSpec beanAnnotation =
@@ -458,9 +517,9 @@ public class MultiDataSourceConfigGenerator {
    *                                              {@link EntityManagerFactory} dependency bean
    * @return the {@link MethodSpec} builder for the {@link PlatformTransactionManager} bean
    */
-  private MethodSpec.Builder createTransactionManagerBeanMethod(
-      FieldSpec beanNamefieldSpec,
-      FieldSpec entityManagerFactoryBeanNameFieldSpec
+  private @Nonnull MethodSpec.Builder createTransactionManagerBeanMethod(
+      @Nonnull FieldSpec beanNamefieldSpec,
+      @Nonnull FieldSpec entityManagerFactoryBeanNameFieldSpec
   ) {
     // Create the method annotations
     final AnnotationSpec beanAnnotation = createBeanAnnotationFromFieldSpec(beanNamefieldSpec);
@@ -499,7 +558,9 @@ public class MultiDataSourceConfigGenerator {
    * @param beanNameFieldSpec the {@link FieldSpec} for the bean name constant
    * @return the {@link AnnotationSpec} for a {@link Bean} annotation with a name attribute
    */
-  private AnnotationSpec createBeanAnnotationFromFieldSpec(FieldSpec beanNameFieldSpec) {
+  private @Nonnull AnnotationSpec createBeanAnnotationFromFieldSpec(
+      @Nonnull FieldSpec beanNameFieldSpec
+  ) {
     return AnnotationSpec.builder(Bean.class)
         .addMember("name", "$N", beanNameFieldSpec)
         .build();
@@ -512,9 +573,8 @@ public class MultiDataSourceConfigGenerator {
    * @param stringArray the actual run time {@link String} array
    * @return the generated {@link String} which represents an array in code
    */
-  private String stringArrayToGeneratedStringArray(String[] stringArray) {
-    return stringArray.length == 0
-        ? "{}"
+  private @Nonnull String stringArrayToGeneratedStringArray(@Nonnull String[] stringArray) {
+    return stringArray.length == 0 ? "{}"
         : "{\"" + String.join("\",\"", stringArray) + "\"}";
   }
 }

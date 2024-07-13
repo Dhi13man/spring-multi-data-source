@@ -1,8 +1,3 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
-
 package io.github.dhi13man.spring.datasource.config;
 
 import java.util.Properties;
@@ -14,7 +9,7 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * This interface is followed by all the generated Multi Data Source Config classes.
+ * This interface is implemented by all the generated Multi Data Source Config classes.
  */
 public interface IMultiDataSourceConfig {
 

@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * Will generate all relevant boilerplate code and beans.
  */
 @Target({ElementType.METHOD})
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 public @interface TargetSecondaryDataSources {
 
   /**

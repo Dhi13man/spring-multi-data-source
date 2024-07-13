@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import javax.annotation.Nonnull;
 
 /**
  * Annotation to enable multi data source configuration for the service.
@@ -13,19 +14,6 @@ import java.lang.annotation.Target;
 public @interface EnableMultiDataSourceConfig {
 
   /**
-   * The array of exact packages to scan for entities.
-   * <p>
-   * This must be an exact package name, and not a prefix as custom entity managers can not
-   * recursively scan entities inside nested packages.
-   * <p>
-   * If {@link TargetSecondaryDataSource} is used on any repository, the package of the entity that
-   * the repository is associated with will also be scanned for entities.
-   *
-   * @return the array of exact packages to scan for entities.
-   */
-  String[] exactEntityPackages() default {};
-
-  /**
    * The array of packages to scan for repositories.
    * <p>
    * This can be a prefix, and will recursively scan all nested packages as @EnableJpaRepositories
@@ -33,14 +21,14 @@ public @interface EnableMultiDataSourceConfig {
    *
    * @return the array of packages to scan for repositories.
    */
-  String[] repositoryPackages() default {};
+  @Nonnull String[] repositoryPackages() default {};
 
   /**
    * The prefix of the properties for each of the data sources in the application properties file.
    *
    * @return the prefix of the data source properties in the application properties file.
    */
-  String datasourcePropertiesPrefix() default "spring.datasource";
+  @Nonnull String datasourcePropertiesPrefix() default "spring.datasource";
 
   /**
    * The package where the generated data source configs will be placed.
@@ -55,23 +43,7 @@ public @interface EnableMultiDataSourceConfig {
    *
    * @return the package where the generated data source configs will be placed.
    */
-  String generatedConfigPackage() default "";
-
-  /**
-   * The prefix of the package where the generated copies of the repositories will be placed.
-   * <p>
-   * If this is not provided, the generated repositories will be placed in the same package as the
-   * class annotated with @EnableMultiDataSourceConfig followed by .generated.repositories and then
-   * .{snake_case_data_source_name}
-   * <p>
-   * The generated repositories will be placed in packages with the following format:
-   * <p>
-   * {generatedRepositoryPackagePrefix}.{PascalCaseDataSourceName}{AnnotatedMethodRepositoryName}
-   *
-   * @return the prefix of the package where the generated copies of the repositories will be
-   * placed.
-   */
-  String generatedRepositoryPackagePrefix() default "";
+  @Nonnull String generatedConfigPackage() default "";
 
   /**
    * The config for the primary data source.
@@ -81,7 +53,7 @@ public @interface EnableMultiDataSourceConfig {
    *
    * @return the {@link DataSourceConfig} annotation for the primary data source.
    */
-  DataSourceConfig primaryDataSourceConfig() default @DataSourceConfig(dataSourceName = "master");
+  @Nonnull DataSourceConfig primaryDataSourceConfig() default @DataSourceConfig(dataSourceName = "master");
 
   /**
    * The array of {@link DataSourceConfig} annotations which contain the configuration for each
@@ -90,7 +62,7 @@ public @interface EnableMultiDataSourceConfig {
    * @return the array of {@link DataSourceConfig} annotations.
    * @see DataSourceConfig
    */
-  DataSourceConfig[] secondaryDataSourceConfigs() default {};
+  @Nonnull DataSourceConfig[] secondaryDataSourceConfigs() default {};
 
   @Retention(RetentionPolicy.RUNTIME)
   @Target({})
@@ -110,14 +82,14 @@ public @interface EnableMultiDataSourceConfig {
      *
      * @return the name of the data source.
      */
-    String dataSourceName() default "";
+    @Nonnull String dataSourceName() default "";
 
     /**
      * The application properties key/path of the data source class properties.
      *
      * @return the prefix of the data source class properties in the application properties file.
      */
-    String dataSourceClassPropertiesPath() default "spring.datasource.hikari";
+    @Nonnull String dataSourceClassPropertiesPath() default "spring.datasource.hikari";
 
     /**
      * The application properties key/path under which the JPA properties to override for this data
@@ -128,6 +100,19 @@ public @interface EnableMultiDataSourceConfig {
      *
      * @return the key under which the JPA properties to override are located.
      */
-    String overridingJpaPropertiesPath() default "spring.jpa.properties";
+    @Nonnull String overridingJpaPropertiesPath() default "spring.jpa.properties";
+
+    /**
+     * The array of exact packages to scan for entities.
+     * <p>
+     * This must be an exact package name, and not a prefix as custom entity managers can not
+     * recursively scan entities inside nested packages.
+     * <p>
+     * If {@link TargetSecondaryDataSource} is used on any repository, the package of the entity
+     * that the repository is associated with will also be scanned for entities.
+     *
+     * @return the array of exact packages to scan for entities.
+     */
+    @Nonnull String[] exactEntityPackages() default {};
   }
 }
