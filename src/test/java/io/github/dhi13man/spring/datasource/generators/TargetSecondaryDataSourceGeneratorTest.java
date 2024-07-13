@@ -1,8 +1,8 @@
 package io.github.dhi13man.spring.datasource.generators;
 
 import io.github.dhi13man.spring.datasource.annotations.TargetSecondaryDataSource;
-import io.github.dhi13man.spring.datasource.generated.repositories.read_replica.ReadReplicaMockConfigTestRepository;
-import io.github.dhi13man.spring.datasource.generated.repositories.replica_2.Replica2MockRepositoryTestRepository;
+import io.github.dhi13man.spring.datasource.generators.generated.repositories.read_replica.ReadReplicaMockConfigTestRepository;
+import io.github.dhi13man.spring.datasource.generators.generated.repositories.replica_2.Replica2MockRepositoryTestRepository;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;

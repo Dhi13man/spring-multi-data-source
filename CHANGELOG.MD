@@ -1,5 +1,86 @@
 # Releases
 
+## [0.3.1] - 13th July 2024
+
+- BREAKING CHANGE: Exact entity packages are now mandatory for each data source. This is to ensure
+  that only the required entities are scanned for each data source and no unnecessary entities are
+  scanned. This is a breaking change as the previous versions took the entity packages from the
+  `@EnableMultiDataSourceConfig` annotation, not from the `@DataSourceConfig` annotation.
+
+  Before:
+
+  ```java
+  @Configuration
+  @EnableMultiDataSourceConfig(
+    repositoryPackages = {
+      "com.sample"
+    },
+    exactEntityPackages = {
+      "com.sample.project.sample_service.entities.mysql"
+    },
+    primaryDataSourceConfig = @DataSourceConfig(dataSourceName = "master"),
+    secondaryDataSourceConfigs = {
+        @DataSourceConfig(dataSourceName = "replica-2"),
+        @DataSourceConfig(dataSourceName = "read-replica")
+    }
+  )
+  public class ServiceConfig {
+  }
+  ```
+
+  After:
+
+  ```java
+   @Configuration
+   @EnableMultiDataSourceConfig(
+      repositoryPackages = {
+        "com.sample"
+      },
+      primaryDataSourceConfig = @DataSourceConfig(
+          dataSourceName = "master",
+          exactEntityPackages = {
+              "com.sample.project.sample_service.entities.mysql",
+              // Assuming master wants access to read entities as well. If not, above package is fine
+              "com.sample.project.sample_service.read_entities.mysql",
+              "com.sample.project.sample_service.read_entities_v2.mysql"
+          }
+      ),
+      secondaryDataSourceConfigs = {
+          @DataSourceConfig(
+              dataSourceName = "read-replica",
+              exactEntityPackages = "com.sample.project.sample_service.read_entities.mysql"
+          ),
+          @DataSourceConfig(
+              dataSourceName = "replica-2",
+              exactEntityPackages = {
+                  "com.sample.project.sample_service.read_entities.mysql",
+                  // Assuming replica-2 wants access to read entities as well as read entities v2
+                  "com.sample.project.sample_service.read_entities_v2.mysql"
+              }
+          ),
+      }
+   )
+   public class ServiceConfig {
+   }
+  ```
+
+- MULTI-MODULE SUPPORT | BREAKING
+  CHANGE: `@EnableMultiDataSourceConfig.generatedRepositoryPackagePrefix` has been removed.
+  Instead, the generated repository package will be the package of the source repository followed by
+  `.generated.repositories` and then the snake-cased datasource name. This allows this project
+  to **finally support Multi-Module projects** as the generated repositories will be in the same
+  module as the source repository, instead of being dictated by the
+  `generatedRepositoryPackagePrefix`.
+
+- MULTI MODULE SUPPORT: The inclusion and exclusion filters of the `@EnableJpaRepositories`
+  annotations generated now internally use `Filter.ASSIGNABLE_TYPE` and `Filter.REGEX` so that
+  repository scanning can be smarter across multiple modules.
+
+- Provided dependency of `com.google.auto.service:auto-service` has been upgraded to `1.1.1` to
+  avoid CVE-2023-2976 and CVE-2020-8908 vulnerabilities.
+
+- Some minor null-safety improvements and code cleanup.
+
 ## [0.2.1] - 10th December 2023
 
 - BREAKING CHANGE: Better organised DataSourceConfig to segregate Primary and Secondary data sources
