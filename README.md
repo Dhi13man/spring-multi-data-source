@@ -246,7 +246,10 @@ intended to be used for generating code for configuring data sources during the 
     jpa:
       # Global JPA Properties
       properties: 
+        # Hibernate properties can only be picked from here when using multiple data sources.
         hibernate.generate_statistics: false
+        hibernate.physical_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+        hibernate.implicit_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
    ```
 
 8. Please always go through the generated code to learn more about what configs to give and what

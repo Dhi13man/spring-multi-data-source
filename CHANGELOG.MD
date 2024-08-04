@@ -1,5 +1,16 @@
 # Releases
 
+## [0.3.2] - 4th August 2024
+
+- **HOTFIX:** Replaced the use of native entity manager factory
+  from `LocalContainerEntityManagerFactoryBean` with `EntityManagerFactory` Spring Proxy bean
+  while creating `PlatformTransactionManager` bean to ensure that Transactional and Flush behaviour
+  works as expected across all data sources.
+    - This will not lead to any changes in your implementation layer. This is a fix in the generated
+      configuration layer.
+- Some minor documentation improvement for dealing with hibernate properties with multiple spring
+  data sources.
+
 ## [0.3.1] - 13th July 2024
 
 - BREAKING CHANGE: Exact entity packages are now mandatory for each data source. This is to ensure

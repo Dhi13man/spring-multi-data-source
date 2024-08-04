@@ -355,7 +355,7 @@ public class MultiDataSourceConfigGenerator {
   }
 
   /**
-   * Create the {@link MethodSpec} builder for the {@link java.util.Properties} bean containing JPA
+   * Create the {@link MethodSpec} builder for the {@link Properties} bean containing JPA
    * properties to override.
    *
    * @param beanNameFieldSpec           the {@link FieldSpec} for this bean name constant
@@ -533,7 +533,7 @@ public class MultiDataSourceConfigGenerator {
 
     // Create the method parameters (EntityManagerFactory dependency)
     final ParameterSpec entityManagerFactoryParameter = ParameterSpec
-        .builder(LocalContainerEntityManagerFactoryBean.class, "entityManagerFactoryBean")
+        .builder(EntityManagerFactory.class, "entityManagerFactory")
         .addAnnotation(qualifierAnnotation)
         .build();
 
@@ -545,7 +545,7 @@ public class MultiDataSourceConfigGenerator {
         .returns(PlatformTransactionManager.class)
         .addParameter(entityManagerFactoryParameter)
         .addStatement(
-            "return new $T($N.getNativeEntityManagerFactory())",
+            "return new $T($N)",
             JpaTransactionManager.class,
             entityManagerFactoryParameter
         );
