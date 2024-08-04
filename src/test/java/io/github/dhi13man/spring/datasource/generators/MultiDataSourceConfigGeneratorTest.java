@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -100,13 +101,10 @@ class MultiDataSourceConfigGeneratorTest {
 
   @Test
   void generateMultiDataSourceConfigTypeElementGetTransactionManager() {
-
     for (final IMultiDataSourceConfig generatedConfig : generatedConfigs) {
       // Arrange
-      final LocalContainerEntityManagerFactoryBean mockEntityManagerFactory = Mockito
-          .mock(LocalContainerEntityManagerFactoryBean.class);
-      Mockito.when(mockEntityManagerFactory.getNativeEntityManagerFactory())
-          .thenReturn(Mockito.mock());
+      final EntityManagerFactory mockEntityManagerFactory = Mockito
+          .mock(EntityManagerFactory.class);
 
       // Act
       final PlatformTransactionManager transactionManager = generatedConfig
