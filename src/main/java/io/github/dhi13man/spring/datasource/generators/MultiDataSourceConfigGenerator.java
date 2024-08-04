@@ -355,8 +355,8 @@ public class MultiDataSourceConfigGenerator {
   }
 
   /**
-   * Create the {@link MethodSpec} builder for the {@link Properties} bean containing JPA
-   * properties to override.
+   * Create the {@link MethodSpec} builder for the {@link Properties} bean containing JPA properties
+   * to override.
    *
    * @param beanNameFieldSpec           the {@link FieldSpec} for this bean name constant
    * @param overridingJpaPropertiesPath The key under which the JPA properties to override are

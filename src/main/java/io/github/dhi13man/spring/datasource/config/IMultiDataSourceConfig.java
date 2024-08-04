@@ -62,8 +62,7 @@ public interface IMultiDataSourceConfig {
   /**
    * Get the transaction manager to be used for the data source.
    *
-   * @param entityManagerFactory The entity manager factory used to create the transaction
-   *                             manager
+   * @param entityManagerFactory The entity manager factory used to create the transaction manager
    * @return The transaction manager.
    */
   PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory);
