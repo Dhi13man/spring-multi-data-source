@@ -434,9 +434,8 @@ public class MultiDataSourceConfigGenerator {
    * Create the {@link MethodSpec} builder for the {@link LocalContainerEntityManagerFactoryBean}
    * bean.
    * <p>
-   * {@link LocalContainerEntityManagerFactoryBean} will determine the
-   * {@link javax.persistence.EntityManager} implementation to use based on the {@link DataSource}
-   * implementation for complex queries.
+   * {@link LocalContainerEntityManagerFactoryBean} will determine the EntityManager implementation
+   * to use based on the {@link DataSource} implementation for complex queries.
    *
    * @param beanNameFieldSpece                      the {@link FieldSpec} for this bean name
    *                                                constant
@@ -449,6 +448,7 @@ public class MultiDataSourceConfigGenerator {
    * @param hibernateBeanContainerPropertyFieldSpec the {@link FieldSpec} for the hibernate bean
    *                                                container property constant
    * @return the {@link MethodSpec} builder for the {@link LocalContainerEntityManagerFactoryBean}
+   * bean
    */
   private @Nonnull MethodSpec.Builder createEntityManagerFactoryBeanMethod(
       @Nonnull FieldSpec beanNameFieldSpece,
