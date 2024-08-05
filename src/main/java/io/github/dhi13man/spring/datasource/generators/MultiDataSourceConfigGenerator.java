@@ -17,7 +17,6 @@ import io.github.dhi13man.spring.datasource.utils.MultiDataSourceGeneratorUtils;
 import java.util.Properties;
 import javax.annotation.Nonnull;
 import javax.lang.model.element.Modifier;
-import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -238,9 +237,10 @@ public class MultiDataSourceConfigGenerator {
    *                                          the data source are located (to be included in the
    *                                          {@link EnableJpaRepositories} annotation)
    * @param entityManagerFactoryBeanNameField the {@link FieldSpec} for the
-   *                                          {@link EntityManagerFactory} bean name constant. This
-   *                                          is used to reference the {@link EntityManagerFactory}
-   *                                          bean in the {@link EnableJpaRepositories} annotation
+   *                                          {@link LocalContainerEntityManagerFactoryBean} bean
+   *                                          name constant. This is used to reference the
+   *                                          {@link LocalContainerEntityManagerFactoryBean} bean in
+   *                                          the {@link EnableJpaRepositories} annotation
    * @param transactionManagerBeanNameField   the {@link FieldSpec} for the
    *                                          {@link PlatformTransactionManager} bean name constant.
    *                                          This is used to reference the
@@ -431,10 +431,11 @@ public class MultiDataSourceConfigGenerator {
   }
 
   /**
-   * Create the {@link MethodSpec} builder for the {@link EntityManagerFactory} bean.
+   * Create the {@link MethodSpec} builder for the {@link LocalContainerEntityManagerFactoryBean}
+   * bean.
    * <p>
-   * {@link EntityManagerFactory} will determine the {@link javax.persistence.EntityManager}
-   * implementation to use based on the {@link DataSource} implementation for complex queries.
+   * {@link LocalContainerEntityManagerFactoryBean} will determine the EntityManager implementation
+   * to use based on the {@link DataSource} implementation for complex queries.
    *
    * @param beanNameFieldSpece                      the {@link FieldSpec} for this bean name
    *                                                constant
@@ -446,7 +447,8 @@ public class MultiDataSourceConfigGenerator {
    *                                                dependency bean name constant
    * @param hibernateBeanContainerPropertyFieldSpec the {@link FieldSpec} for the hibernate bean
    *                                                container property constant
-   * @return the {@link MethodSpec} builder for the {@link EntityManagerFactory} bean
+   * @return the {@link MethodSpec} builder for the {@link LocalContainerEntityManagerFactoryBean}
+   * bean
    */
   private @Nonnull MethodSpec.Builder createEntityManagerFactoryBeanMethod(
       @Nonnull FieldSpec beanNameFieldSpece,
@@ -514,7 +516,8 @@ public class MultiDataSourceConfigGenerator {
    *
    * @param beanNamefieldSpec                     the {@link FieldSpec} for this bean name constant
    * @param entityManagerFactoryBeanNameFieldSpec the {@link FieldSpec} for the
-   *                                              {@link EntityManagerFactory} dependency bean
+   *                                              {@link LocalContainerEntityManagerFactoryBean}
+   *                                              dependency bean
    * @return the {@link MethodSpec} builder for the {@link PlatformTransactionManager} bean
    */
   private @Nonnull MethodSpec.Builder createTransactionManagerBeanMethod(
@@ -533,7 +536,7 @@ public class MultiDataSourceConfigGenerator {
 
     // Create the method parameters (EntityManagerFactory dependency)
     final ParameterSpec entityManagerFactoryParameter = ParameterSpec
-        .builder(EntityManagerFactory.class, "entityManagerFactory")
+        .builder(LocalContainerEntityManagerFactoryBean.class, "entityManagerFactoryBean")
         .addAnnotation(qualifierAnnotation)
         .build();
 
@@ -545,7 +548,7 @@ public class MultiDataSourceConfigGenerator {
         .returns(PlatformTransactionManager.class)
         .addParameter(entityManagerFactoryParameter)
         .addStatement(
-            "return new $T($N)",
+            "return new $T($N.getObject())",
             JpaTransactionManager.class,
             entityManagerFactoryParameter
         );
