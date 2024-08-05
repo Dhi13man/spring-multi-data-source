@@ -1,5 +1,12 @@
 # Releases
 
+## [0.3.3] - 5th August 2024
+
+- Java 17+ Support: Added support for Java 17+ by abstracting away all usages
+  of `javax.persistence`. This is to ensure that the library is compatible with the latest Java
+  versions.
+    - This is a minor change and should not affect any existing implementations.
+
 ## [0.3.2] - 4th August 2024
 
 - **HOTFIX:** Replaced the use of native entity manager factory
