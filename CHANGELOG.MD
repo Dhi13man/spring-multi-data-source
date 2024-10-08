@@ -219,7 +219,7 @@
   methods to ensure only overriden, annotated methods are supported.
 - Fix Dependabot Issue #1
 
-## [0.0.1] - 18th June 2022
+## [0.0.1] - 18th June 2023
 
 - Initial Release with full working implementation of @EnableMultiDataSourceConfig and
   @MultiDataSourceRepository
