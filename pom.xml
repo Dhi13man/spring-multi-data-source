@@ -11,11 +11,10 @@
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
+          <release>${java.version}</release>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.8.0</version>
+        <version>3.14.1</version>
       </plugin>
 
       <!--  Maven Deploy  -->
@@ -108,19 +107,30 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <failIfNoTests>true</failIfNoTests>
           <runOrder>alphabetical</runOrder>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>2.22.2</version>
+        <version>3.5.5</version>
       </plugin>
     </plugins>
   </build>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <groupId>org.springframework.boot</groupId>
+        <scope>import</scope>
+        <type>pom</type>
+        <version>${spring.boot.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <artifactId>spring-boot</artifactId>
       <groupId>org.springframework.boot</groupId>
       <scope>provided</scope>
-      <version>${spring.boot.version}</version>
     </dependency>
 
     <dependency>
@@ -133,21 +143,18 @@
       </exclusions>
       <groupId>org.springframework.data</groupId>
       <scope>provided</scope>
-      <version>${spring.boot.version}</version>
     </dependency>
 
     <dependency>
       <artifactId>spring-boot-autoconfigure</artifactId>
       <groupId>org.springframework.boot</groupId>
       <scope>provided</scope>
-      <version>${spring.boot.version}</version>
     </dependency>
 
     <dependency>
       <artifactId>hibernate-core</artifactId>
-      <groupId>org.hibernate</groupId>
+      <groupId>org.hibernate.orm</groupId>
       <scope>provided</scope>
-      <version>5.6.15.Final</version>
     </dependency>
 
     <dependency>
@@ -167,14 +174,12 @@
       <artifactId>junit-jupiter</artifactId>
       <groupId>org.junit.jupiter</groupId>
       <scope>test</scope>
-      <version>5.10.0</version>
     </dependency>
 
     <dependency>
       <artifactId>mockito-core</artifactId>
       <groupId>org.mockito</groupId>
       <scope>test</scope>
-      <version>5.2.0</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
@@ -182,7 +187,6 @@
       <artifactId>h2</artifactId>
       <groupId>com.h2database</groupId>
       <scope>test</scope>
-      <version>2.2.220</version>
     </dependency>
 
   </dependencies>
@@ -219,11 +223,11 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>jar</packaging>
   <properties>
-    <java.version>11</java.version>
+    <java.version>17</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <sonar.language>java</sonar.language>
-    <spring.boot.version>2.7.18</spring.boot.version>
+    <spring.boot.version>3.5.16</spring.boot.version>
   </properties>
   <scm>
     <connection>scm:git:git://github.com/Dhi13man/spring-multi-data-source.git</connection>
