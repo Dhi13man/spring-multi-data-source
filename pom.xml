@@ -14,7 +14,7 @@
           <release>${java.version}</release>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.14.1</version>
+        <version>3.15.0</version>
       </plugin>
 
       <!--  Maven Deploy  -->
@@ -24,7 +24,7 @@
           <skip>true</skip>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.0.0</version>
+        <version>3.1.4</version>
       </plugin>
 
       <!-- Maven Spring Boot -->
@@ -46,7 +46,7 @@
         </configuration>
         <extensions>true</extensions>
         <groupId>org.sonatype.plugins</groupId>
-        <version>1.6.13</version>
+        <version>1.7.0</version>
       </plugin>
 
       <plugin>
@@ -60,7 +60,7 @@
           </execution>
         </executions>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.2.1</version>
+        <version>3.4.0</version>
       </plugin>
 
       <plugin>
@@ -74,7 +74,7 @@
           </execution>
         </executions>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.4.1</version>
+        <version>3.12.0</version>
       </plugin>
 
       <plugin>
@@ -89,7 +89,7 @@
           </execution>
         </executions>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.0.1</version>
+        <version>3.2.8</version>
       </plugin>
 
       <plugin>
@@ -111,7 +111,7 @@
           <runOrder>alphabetical</runOrder>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.5.5</version>
+        <version>3.5.6</version>
       </plugin>
     </plugins>
   </build>
