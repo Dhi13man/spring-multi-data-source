@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Dhi13man/spring-multi-data-source/security/advisories/new
+    about: Report undisclosed vulnerabilities privately
+  - name: Questions and ideas
+    url: https://github.com/Dhi13man/spring-multi-data-source/discussions
+    about: Ask for help or discuss ideas before filing an issue
