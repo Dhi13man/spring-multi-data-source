@@ -101,7 +101,7 @@
           <useReleaseProfile>false</useReleaseProfile>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>2.5.3</version>
+        <version>3.3.1</version>
       </plugin>
 
       <plugin>
