@@ -1,9 +1,10 @@
 # spring-multi-data-source
 
-[![License](https://img.shields.io/github/license/dhi13man/spring-multi-data-source)](https://github.com/Dhi13man/spring-multi-data-source/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/dhi13man/spring-multi-data-source)](https://github.com/Dhi13man/spring-multi-data-source/blob/main/LICENSE.MD)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Dhi13man/spring-multi-data-source/badge)](https://scorecard.dev/viewer/?uri=github.com/Dhi13man/spring-multi-data-source)
 [![Contributors](https://img.shields.io/github/contributors-anon/dhi13man/spring-multi-data-source?style=flat)](https://github.com/Dhi13man/spring-multi-data-source/graphs/contributors)
 [![GitHub forks](https://img.shields.io/github/forks/dhi13man/spring-multi-data-source?style=social)](https://github.com/Dhi13man/spring-multi-data-source/network/members)
-[![GitHub Repo stars](https://img.shields.io/github/stars/dhi13man/spring-multi-data-source?style=social)](https://github.com/Dhi13man/spring-multi-data-source/stargazers)
+[![GitHub Repo stars](https://img.shields.io/github/stars/dhi13man/spring-multi-data-source?style=social)](https://github.com/Dhi13man/spring-multi-data-source)
 [![Last Commit](https://img.shields.io/github/last-commit/dhi13man/spring-multi-data-source)](https://github.com/Dhi13man/spring-multi-data-source/commits/main)
 [![GitHub issues](https://img.shields.io/github/issues/dhi13man/spring-multi-data-source)](https://github.com/Dhi13man/spring-multi-data-source/issues)
 [![Build, Format, Test](https://github.com/dhi13man/spring-multi-data-source/actions/workflows/maven.yml/badge.svg)](https://github.com/Dhi13man/spring-multi-data-source/actions)
@@ -12,8 +13,6 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.dhi13man/spring-multi-data-source?style=for-the-badge&link=https%3A%2F%2Fmvnrepository.com%2Fartifact%2Fio.github.dhi13man%2Fspring-multi-data-source)](https://mvnrepository.com/artifact/io.github.dhi13man/spring-multi-data-source)
 
 [!["Buy Me A Coffee"](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20an%20Ego%20boost&emoji=%F0%9F%98%B3&slug=dhi13man&button_colour=FF5F5F&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00****)](https://www.buymeacoffee.com/dhi13man)
-
-[![Medium Article](https://img.shields.io/badge/Medium-12100E?style=for-the-badge&logo=medium&logoColor=white)](https://medium.com/@dhi13man/simplify-multiple-data-source-integration-for-spring-boot-services-c465ce1dcdb6)
 
 Spring Boot has multiple limitations when using multiple data sources in a single service. This
 project aims to solve those limitations by providing custom annotations that can be used to generate
@@ -62,64 +61,64 @@ for configuring multi-data source configurations for a service. Let's break down
 
 ### @EnableMultiDataSourceConfig
 
-- This annotation is used to enable multi-data source configuration for the service. This will
+* This annotation is used to enable multi-data source configuration for the service. This will
   replace the `@EnableJpaRepositories` and `@EntityScan` annotations used by Spring.
 
-- It can be applied to a class (target: `ElementType.TYPE`).
+* It can be applied to a class (target: `ElementType.TYPE`).
 
-- It has the following attributes:
-    - `exactEntityPackages`: An array of exact packages to scan for entities. These packages are
+* It has the following attributes:
+  * `exactEntityPackages`: An array of exact packages to scan for entities. These packages are
       scanned to find the entities related to the data sources.
-    - `repositoryPackages`: An array of packages to scan for repositories. These packages are
+  * `repositoryPackages`: An array of packages to scan for repositories. These packages are
       scanned to find the repositories related to the data sources.
-    - `datasourcePropertiesPrefix`: The prefix of the data source properties in the
+  * `datasourcePropertiesPrefix`: The prefix of the data source properties in the
       application properties file. The properties for each data source will be placed under this
       prefix followed by the kebab case of the data source name. Eg. When set as `spring.datasource`
       for master and readReplica data sources, the properties will be placed under
       `spring.datasource.master` and `spring.datasource.read-replica` respectively.
-    - `generatedConfigPackage`: The package where the generated data source configs will
+  * `generatedConfigPackage`: The package where the generated data source configs will
       be placed. The generated config class with relevant beans will follow a specific naming
       format. If this is not specified, the generated config will be placed in the same package as
       the class where this annotation is applied, followed by `.generated.config`.
-    - `generatedRepositoryPackagePrefix`: The prefix of the package where the generated copies
+  * `generatedRepositoryPackagePrefix`: The prefix of the package where the generated copies
       of the repositories will be placed. The generated repositories will follow a specific
       naming format. If this is not specified, the generated repositories will be placed in the
       same package as the class where this annotation is applied, followed by
       `.generated.repositories` and then `.<data_source_name>`.
-    - `primaryDataSourceConfig`: A `@DataSourceConfig` annotation. This annotation represents
+  * `primaryDataSourceConfig`: A `@DataSourceConfig` annotation. This annotation represents
       the primary data source and its configuration. The primary data source will be able
       to access every repository other than the repositories generated for the secondary data
       sources.
-    - `secondaryDataSourceConfigs`: An array of `@DataSourceConfig` annotations. Each annotation
+  * `secondaryDataSourceConfigs`: An array of `@DataSourceConfig` annotations. Each annotation
       represents a data source and its configuration. The secondary data sources will only be able
       to access the repositories generated for them.
 
 #### @EnableMultiDataSourceConfig.DataSourceConfig
 
-- This sub-annotation is used to configure a data source and its properties for
+* This sub-annotation is used to configure a data source and its properties for
   `@EnableMultiDataSourceConfig`. It can not be applied directly anywhere other than in
   the `dataSourceConfigs` attribute of `@EnableMultiDataSourceConfig`.
 
-- It has the following attributes:
-    - `dataSourceName`: The name of the data source. It is used to generate the data source
+* It has the following attributes:
+  * `dataSourceName`: The name of the data source. It is used to generate the data source
       beans and to name the generated classes, packages, and property paths for the data
       source properties.
-    - `dataSourceClassPropertiesPath`:The application properties key/path of the data source class'
+  * `dataSourceClassPropertiesPath`:The application properties key/path of the data source class'
       properties. Eg. `spring.datasource.hikari` for Hikari data sources.
-    - `overridingPropertiesPath`:  The application properties key/path under which the JPA
+  * `overridingPropertiesPath`:  The application properties key/path under which the JPA
       properties to override for this data source are located. This allows overriding of the JPA
       properties for each data source. By default, it will take the default `spring.jpa.properties`
       path.
 
 ### @TargetSecondaryDataSource
 
-- This annotation is used to create copies of repositories in relevant packages and
+* This annotation is used to create copies of repositories in relevant packages and
   autoconfigure them to use the relevant data sources.
 
-- It can be applied to a method (target: `ElementType.METHOD`).
+* It can be applied to a method (target: `ElementType.METHOD`).
 
-- It has the following attributes:
-    - `dataSourceName` (or `value`): The name of the data source to use for the repository.
+* It has the following attributes:
+  * `dataSourceName` (or `value`): The name of the data source to use for the repository.
 
 Both annotations are available at the source level and are not retained at runtime. They are
 intended to be used for generating code for configuring data sources during the build process.
@@ -131,7 +130,7 @@ intended to be used for generating code for configuring data sources during the 
 
    ```xml
    <dependency>
-     <groupId>com.dhi13man.spring</groupId>
+     <groupId>io.github.dhi13man</groupId>
      <artifactId>spring-multi-data-source</artifactId>
      <version>${desired.version}</version>
      <scope>provided</scope>
@@ -291,8 +290,8 @@ out [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
 ## License
 
-This project is licensed under the GNU Lesser General Public License v3.0. Please check
-out [LICENSE](LICENSE) for more details.
+This project is licensed under the GNU General Public License v3.0. See
+[LICENSE.MD](LICENSE.MD) for the full terms.
 
 ## Resources
 

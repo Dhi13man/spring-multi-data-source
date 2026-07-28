@@ -1,20 +1,20 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
-assignees: ''
-
+about: Propose a focused improvement to the library
+title: ""
+labels: enhancement
+assignees: ""
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Problem
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+Describe the user problem or limitation. Include a concrete example when possible.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Proposed change
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+Describe the smallest change that would solve the problem and how users would interact with it.
+
+## Alternatives and compatibility
+
+List alternatives you considered and any expected impact on generated code, Java versions, or
+Spring Boot compatibility.
